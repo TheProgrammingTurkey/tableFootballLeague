@@ -71,14 +71,14 @@ function update() {
     //Calculate the vertices of the football
     calculateVertices();
     //Friction
-    football.velocity = football.velocity.product(57*secondsPassed);
-    football.angularVelocity *= 57*secondsPassed;
+    football.velocity = football.velocity.product(.95);//57*secondsPassed);
+    football.angularVelocity *= .95;//57*secondsPassed;
     //Round the velocity
     football.velocity.x = Math.round(football.velocity.x*1000)/1000;
     football.velocity.y = Math.round(football.velocity.y*1000)/1000;
     football.angularVelocity = Math.round(football.angularVelocity*1000)/1000;
     //If the velocity is small enough, no more velocity
-    if(football.velocity.magnitude() < 0.01){
+    if(football.velocity.magnitude() < 0.02){
         football.velocity.x = 0;
         football.velocity.y = 0;
         football.angularVelocity = 0;
@@ -236,6 +236,20 @@ function calculateCollision(intersectionPoints) {
     football.velocity.y = (impulse/football.mass)*Math.sin(angle)/Math.max(1, Math.abs(spinAmt)/10);
     football.angularVelocity = (impulse/football.mass)*spinAmt/2;
 }
+//Check if football is in play
+function checkInPlay() {
+    return football.vertex1.y >= table.y && football.vertex2.y >= table.y && football.vertex3.y >= table.y && football.vertex1.y <= table.y + table.height && football.vertex2.y <= table.y + table.height && football.vertex3.y <= table.y + table.height;
+}
+//Check if the football is off the edge of the table for a touchdown
+function checkTouchdown(team){
+    if(team == 0) return football.vertex1.y < table.y || football.vertex2.y < table.y || football.vertex3.y < table.y;
+    return football.vertex1.y > table.y + table.height || football.vertex2.y > table.y + table.height || football.vertex3.y > table.y + table.height;
+}
+//Check if the football has fallen off the table
+function checkOff(team){
+    if(team == 0) return football.center.y < table.y;
+    return football.center.y > table.y + table.height;
+}
 //Find the distance from a point to an infinite line defined by two points
 function distancePointToInfiniteLine(point, a, b) {
     const dx = b.x - a.x;
@@ -294,6 +308,13 @@ function draw(timeStamp) {
     //Clear the canvas
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);    
     update();
+    
+    //Draw the table
+    ctx.beginPath();
+    ctx.rect(table.x, table.y, table.width, table.height);
+    ctx.strokeStyle = "black";
+    ctx.stroke();
+
     //Draw the sides of the football
     ctx.beginPath();
     ctx.moveTo(football.vertex1.x, football.vertex1.y);
@@ -302,13 +323,22 @@ function draw(timeStamp) {
     ctx.lineTo(football.vertex1.x, football.vertex1.y);
     ctx.strokeStyle = "Black";
     ctx.stroke();
-    ctx.fillStyle = "black";
+    if(checkInPlay()){
+        ctx.fillStyle = "black";
+    }
+    else if(checkOff(0)){
+        ctx.fillStyle = "yellow";
+    }
+    else if(checkTouchdown(0)){
+        ctx.fillStyle = "green";
+    }
+    else if(checkTouchdown(1) || checkOff(1)){
+        ctx.fillStyle = "red";
+    }
+    else{
+        ctx.fillStyle = "blue";
+    }
     ctx.fill();
-
-    ctx.beginPath();
-    ctx.rect(table.x, table.y, table.width, table.height);
-    ctx.strokeStyle = "black";
-    ctx.stroke();
 
     window.requestAnimationFrame(draw);
 }
