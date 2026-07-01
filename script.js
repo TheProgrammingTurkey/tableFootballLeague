@@ -10,22 +10,32 @@ canvas.width = Math.floor(window.innerWidth);
 //creates key object (kind of array)
 let toggledKeys = {};
 
+//Set up the table
+let table = {
+    x: 100,
+    y: 100,
+    height: canvas.height - 200,
+    width: canvas.width - 200,
+}
+
 //Set up the football
-football = {
-    vertex1: new Vec2(100, 100),
-    vertex2: new Vec2(250, 100),
-    vertex3: new Vec2(100, 250),
-    com: new Vec2(0, 0),
+let football = {
+    vertex1: new Vec2,
+    vertex2: new Vec2,
+    vertex3: new Vec2,
+    center: new Vec2(canvas.width/2, canvas.height-2*table.y),
+    sideLengths: [58, 82],
     mass: 1,
     velocity: new Vec2(0, 0),
+    angularVelocity: 0,
+    angle: 0,
 };
 //Calculate the center of mass of the football
-football.com.x = (football.vertex1.x + football.vertex2.x + football.vertex3.x) / 3;
-football.com.y = (football.vertex1.y + football.vertex2.y + football.vertex3.y) / 3;
+calculateVertices();
 //Set up the mouse
-mouse = {
-    position: new Vec2(canvas.width/2, canvas.height/2),
-}
+let mouse = {
+    position: new Vec2(football.center.x, football.center.y),
+};
 
 //when key is pressed down, log the key
 document.addEventListener("keydown", event => {
@@ -48,11 +58,6 @@ document.addEventListener("mousemove", function(event) {
         mouse.position.y = event.clientY;
         return;
     }
-    // ctx.beginPath();
-    // ctx.moveTo(mouse.position.x, mouse.position.y);
-    // ctx.lineTo(event.clientX, event.clientY);
-    // ctx.strokeStyle = "blue";
-    // ctx.stroke();
     //Handle the result of the collision
     calculateCollision(intersectionPoints);
     mouse.position.x = event.clientX;
@@ -61,27 +66,30 @@ document.addEventListener("mousemove", function(event) {
 
 function update() {
     //Move the football
-    football.vertex1.addScale(football.velocity, secondsPassed*500);
-    football.vertex2.addScale(football.velocity, secondsPassed*500);
-    football.vertex3.addScale(football.velocity, secondsPassed*500);
-    //Calculate the center of mass
-    football.com.x = (football.vertex1.x + football.vertex2.x + football.vertex3.x) / 3;
-    football.com.y = (football.vertex1.y + football.vertex2.y + football.vertex3.y) / 3;
+    football.center.addScale(football.velocity, secondsPassed*500);
+    football.angle += football.angularVelocity*secondsPassed;
+    //Calculate the vertices of the football
+    calculateVertices();
     //Friction
     football.velocity = football.velocity.product(57*secondsPassed);
+    football.angularVelocity *= 57*secondsPassed;
     //Round the velocity
     football.velocity.x = Math.round(football.velocity.x*1000)/1000;
     football.velocity.y = Math.round(football.velocity.y*1000)/1000;
+    football.angularVelocity = Math.round(football.angularVelocity*1000)/1000;
     //If the velocity is small enough, no more velocity
     if(football.velocity.magnitude() < 0.01){
         football.velocity.x = 0;
         football.velocity.y = 0;
+        football.angularVelocity = 0;
     }
+    
 }
 //Check if the mouse hit any of the sides of the football
 function checkBallHit() {
     let mouseStart = {x: mouse.position.x, y: mouse.position.y};
     let mouseEnd = {x: event.clientX, y: event.clientY};
+    //If the contact comes from within the football, dont do anything
     if(isPointInTriangle(mouseStart, football.vertex1, football.vertex2, football.vertex3)) return [null, null, null];
     return [intersection(mouseStart, mouseEnd, football.vertex1, football.vertex2), intersection(mouseStart, mouseEnd, football.vertex2, football.vertex3), intersection(mouseStart, mouseEnd, football.vertex3, football.vertex1)];
 }
@@ -213,39 +221,34 @@ function intersection(A, B, C, D) {
 }
 //Handle the collision between the mouse and the football
 function calculateCollision(intersectionPoints) {
-    //Find which collision point is closest to the mouse start position (Which side the mouse hits first)
     const mouseStart = {x: mouse.position.x, y: mouse.position.y};
     const mouseEnd = {x: event.clientX, y: event.clientY};
-    let minDist = Infinity;
-    let collidedLine = -1;
-    for(let i = 0; i < intersectionPoints.length; i++){
-        if(intersectionPoints[i] == null){
-            continue;
-        }
-        let dist = Math.hypot(intersectionPoints[i].x - mouseStart.x, intersectionPoints[i].y - mouseStart.y);
-        if(dist < minDist){
-            minDist = dist;
-            collidedLine = i;
-        }
-    }
-    //Find the angle of the line that was hit (So we know which direction to apply translational movement)
-    let angle = 0;
-    if(collidedLine == 0){
-        angle = Math.atan2(football.vertex1.y - football.vertex2.y, football.vertex1.x - football.vertex2.x) - Math.PI/2;
-    }
-    else if(collidedLine == 1){
-        angle = Math.atan2(football.vertex2.y - football.vertex3.y, football.vertex2.x - football.vertex3.x) - Math.PI/2;
-    }
-    else{
-        angle = Math.atan2(football.vertex3.y - football.vertex1.y, football.vertex3.x - football.vertex1.x) - Math.PI/2;
-    }
+    //Find how far the mouse is from the COM of the football --> how much the football should spin
+    let spinAmt = distancePointToInfiniteLine(football.center, mouseStart, mouseEnd);
+    //Find the angle of the mouse movement
+    let angle = Math.atan2(mouseEnd.y - mouseStart.y, mouseEnd.x - mouseStart.x);
     //Calculate the force of the mouse onto the football
-    const force = .002*Math.hypot(mouseEnd.x - mouseStart.x, mouseEnd.y - mouseStart.y) / secondsPassed;
+    const force = .0035*Math.hypot(mouseEnd.x - mouseStart.x, mouseEnd.y - mouseStart.y) / secondsPassed;
     const time = .3;
     const impulse = force*time;
     //Apply the impulse to the football's velocity
-    football.velocity.x += (impulse/football.mass)*Math.cos(angle);
-    football.velocity.y += (impulse/football.mass)*Math.sin(angle);
+    football.velocity.x = (impulse/football.mass)*Math.cos(angle)/Math.max(1, Math.abs(spinAmt)/10);
+    football.velocity.y = (impulse/football.mass)*Math.sin(angle)/Math.max(1, Math.abs(spinAmt)/10);
+    football.angularVelocity = (impulse/football.mass)*spinAmt/2;
+}
+//Find the distance from a point to an infinite line defined by two points
+function distancePointToInfiniteLine(point, a, b) {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+
+    const length = Math.hypot(dx, dy);
+    if (length === 0) return 0;
+
+    // Signed cross product divided by line length
+    return (
+        dx * (point.y - a.y) -
+        dy * (point.x - a.x)
+    ) / length;
 }
 //Check if a point is inside a triangle
 function isPointInTriangle(P, A, B, C) {
@@ -269,6 +272,20 @@ function isPointInTriangle(P, A, B, C) {
 
     return u > 0 && v > 0 && (u + v < 1);
 }
+//Calculate where each vertex should be
+function calculateVertices() {
+    //Set up with respect to origin
+    const vertex1 = {x: -football.sideLengths[0]/3, y: football.sideLengths[0]/3};
+    const vertex2 = {x: -football.sideLengths[0]/3, y: -2*football.sideLengths[0]/3};
+    const vertex3 = {x: 2*football.sideLengths[0]/3, y: football.sideLengths[0]/3};
+    //Rotate and translate to the football's position
+    football.vertex1.x = vertex1.x * Math.cos(football.angle) - vertex1.y * Math.sin(football.angle) + football.center.x;
+    football.vertex1.y = vertex1.x * Math.sin(football.angle) + vertex1.y * Math.cos(football.angle) + football.center.y;
+    football.vertex2.x = vertex2.x * Math.cos(football.angle) - vertex2.y * Math.sin(football.angle) + football.center.x;
+    football.vertex2.y = vertex2.x * Math.sin(football.angle) + vertex2.y * Math.cos(football.angle) + football.center.y;
+    football.vertex3.x = vertex3.x * Math.cos(football.angle) - vertex3.y * Math.sin(football.angle) + football.center.x;
+    football.vertex3.y = vertex3.x * Math.sin(football.angle) + vertex3.y * Math.cos(football.angle) + football.center.y;
+}
 //Draw everything
 function draw(timeStamp) {
     //Calculate how much time has passed since the last frame
@@ -286,12 +303,12 @@ function draw(timeStamp) {
     ctx.strokeStyle = "Black";
     ctx.stroke();
     ctx.fillStyle = "black";
-    // ctx.fill();
+    ctx.fill();
 
     ctx.beginPath();
-    ctx.arc(football.com.x, football.com.y, 5, 0, 2 * Math.PI);
-    ctx.fillStyle = "red";
-    ctx.fill();
+    ctx.rect(table.x, table.y, table.width, table.height);
+    ctx.strokeStyle = "black";
+    ctx.stroke();
 
     window.requestAnimationFrame(draw);
 }
