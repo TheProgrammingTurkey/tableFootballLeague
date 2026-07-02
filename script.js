@@ -10,6 +10,14 @@ canvas.width = Math.floor(window.innerWidth);
 //creates key object (kind of array)
 let toggledKeys = {};
 
+//Set up the game
+let game = {
+    homeScore: 0,
+    awayScore: 0,
+    homeOffs: 0,
+    awayOffs: 0,
+    homeTurn: true
+}
 //Set up the table
 let table = {
     x: 100,
@@ -29,6 +37,7 @@ let football = {
     velocity: new Vec2(0, 0),
     angularVelocity: 0,
     angle: 0,
+    stopped: true
 };
 //Calculate the center of mass of the football
 calculateVertices();
@@ -77,11 +86,38 @@ function update() {
     football.velocity.x = Math.round(football.velocity.x*1000)/1000;
     football.velocity.y = Math.round(football.velocity.y*1000)/1000;
     football.angularVelocity = Math.round(football.angularVelocity*1000)/1000;
-    //If the velocity is small enough, no more velocity
-    if(football.velocity.magnitude() < 0.02){
+    //If the velocity is small enough, no more velocity and check state of ball
+    if(football.velocity.magnitude() < 0.02 && !football.stopped){
         football.velocity.x = 0;
         football.velocity.y = 0;
         football.angularVelocity = 0;
+        football.stopped = true;
+        //Check if its a touchdown for the home team (bottom player)
+        if(checkTouchdown(0) && game.homeTurn){
+            game.homeScore+=6;
+        }//Check for a safety for the away team (top player)
+        else if(checkTouchdown(0) || (checkOff(0) && !game.homeTurn)){
+            game.homeScore+=2;
+        }//Check if its an off for the home team (bottom player)
+        else if(checkOff(0) && game.homeTurn){
+            game.homeOffs+=1;
+        }//Check if its an off for the away team (top player)
+        else if(checkOff(1) && !game.homeTurn){
+            game.awayOffs+=1;
+        }//Check if its a touchdown for the away team (top player)
+        else if(checkTouchdown(1) && !game.homeTurn){
+            game.awayScore+=6;
+        }//Check for a safety for the home team (bottom player)
+        else if(checkTouchdown(1) || (checkOff(1) && game.homeTurn)){
+            game.awayScore+=2;
+        }
+        //Change whos turn it is
+        if(game.homeTurn){
+            game.homeTurn = false;
+        }
+        else{
+            game.homeTurn = true;
+        }
     }
     
 }
@@ -235,6 +271,7 @@ function calculateCollision(intersectionPoints) {
     football.velocity.x = (impulse/football.mass)*Math.cos(angle)/Math.max(1, Math.abs(spinAmt)/10);
     football.velocity.y = (impulse/football.mass)*Math.sin(angle)/Math.max(1, Math.abs(spinAmt)/10);
     football.angularVelocity = (impulse/football.mass)*spinAmt/2;
+    football.stopped = false;
 }
 //Check if football is in play
 function checkInPlay() {
@@ -242,8 +279,8 @@ function checkInPlay() {
 }
 //Check if the football is off the edge of the table for a touchdown
 function checkTouchdown(team){
-    if(team == 0) return football.vertex1.y < table.y || football.vertex2.y < table.y || football.vertex3.y < table.y;
-    return football.vertex1.y > table.y + table.height || football.vertex2.y > table.y + table.height || football.vertex3.y > table.y + table.height;
+    if(team == 0) return (football.vertex1.y < table.y || football.vertex2.y < table.y || football.vertex3.y < table.y) && !checkOff(0);
+    return (football.vertex1.y > table.y + table.height || football.vertex2.y > table.y + table.height || football.vertex3.y > table.y + table.height) && !checkOff(1);
 }
 //Check if the football has fallen off the table
 function checkOff(team){
@@ -323,7 +360,7 @@ function draw(timeStamp) {
     ctx.lineTo(football.vertex1.x, football.vertex1.y);
     ctx.strokeStyle = "Black";
     ctx.stroke();
-    if(checkInPlay()){
+    if(checkInPlay() || football.velocity.magnitude() > 0){
         ctx.fillStyle = "black";
     }
     else if(checkOff(0)){
@@ -339,6 +376,36 @@ function draw(timeStamp) {
         ctx.fillStyle = "blue";
     }
     ctx.fill();
+
+    //Drawing the scoreboard
+    ctx.fillStyle = "black";
+    ctx.font = "bold 32px Arial";
+    ctx.textBaseline = 'bottom';
+    ctx.textAlign = 'center';
+    
+    let data = [
+        [game.homeScore, game.homeOffs], 
+        [game.awayScore, game.awayOffs],
+    ];
+    
+    const cellWidth = [75, 150];
+    const cellHeight = 40;
+    let startX = table.x-cellWidth[0];
+    const startY = table.y-10-cellHeight*2;
+
+    for (let row = 0; row < data.length; row++) {
+        let x = startX;
+        for (let col = 0; col < data[row].length; col++) {
+            const y = startY + row * cellHeight;
+            x+=cellWidth[col%2];
+
+            // Draw cell border
+            ctx.strokeRect(x, y, cellWidth[(col+1)%2], cellHeight);
+
+            // Draw cell text
+            ctx.fillText(data[row][col], x + cellWidth[(col+1)%2] / 2, y + cellHeight);
+        }
+    }
 
     window.requestAnimationFrame(draw);
 }
