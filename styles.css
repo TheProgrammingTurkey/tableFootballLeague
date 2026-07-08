@@ -1,0 +1,9 @@
+html, body {
+  overflow: hidden;   /* Prevents both vertical and horizontal scroll */
+  height: 100%;       /* Ensures the page doesn't extend beyond viewport */
+  margin: 0;          /* Remove default margins */
+}
+canvas {
+  touch-action: none; /* Prevent scrolling on touch */
+  
+}
