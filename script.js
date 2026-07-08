@@ -39,10 +39,10 @@ let football = {
     stopped: true,
     inertia: 500,
     kickoff: true,
+    design: [new Vec2(5,5), new Vec2(53,53), new Vec2(0,0), new Vec2(0,0), new Vec2(0,0), new Vec2(0,0), new Vec2(0,0), new Vec2(0,0)]
 };
 //Set up the mouse
 let mouse = {
-    position: new Vec2(football.center.x, football.center.y),
     history: []
 };
 //Calculate the center of mass of the football
@@ -65,11 +65,6 @@ document.addEventListener("keyup", event => {
     toggledKeys[event.code] = false;
     event.preventDefault();
 });
-
-
-
-
-
 
 //When the mouse is moved
 document.addEventListener("pointermove", function(event) {
@@ -94,14 +89,10 @@ document.addEventListener("pointermove", function(event) {
     const intersectionPoints = checkBallHit(new Vec2(event.clientX, event.clientY));
     //If the mouse didn't hit the football, don't do anything
     if((intersectionPoints[0] == null && intersectionPoints[1] == null && intersectionPoints[2] == null) || football.velocity.x != 0 || football.velocity.y != 0){
-        mouse.position.x = event.clientX;
-        mouse.position.y = event.clientY;
         return;
     }
     //Handle the result of the collision
     calculateCollision(intersectionPoints, new Vec2(event.clientX, event.clientY));
-    mouse.position.x = event.clientX;
-    mouse.position.y = event.clientY;
 });
 //Run each tick
 function update() {
@@ -110,7 +101,7 @@ function update() {
     football.angle += football.angularVelocity*secondsPassed;
     //Calculate the vertices of the football
     calculateVertices();
-    //Friction (frame-rate independent)
+    //Friction
     if(!football.kickoff){
         const frictionFactor = Math.pow(friction, secondsPassed * 60); // Normalize to 60fps
         football.velocity = football.velocity.product(frictionFactor);
@@ -192,7 +183,7 @@ function update() {
 }
 //Check if the mouse hit any of the sides of the football
 function checkBallHit(mouseEnd) {
-    let mouseStart = {x: mouse.position.x, y: mouse.position.y};
+    let mouseStart = {x: mouse.history[0].x, y: mouse.history[0].y};
     //If the contact comes from within the football, dont do anything
     if(isPointInTriangle(mouseStart, football.vertex1, football.vertex2, football.vertex3)) return [null, null, null];
     return [intersection(mouseStart, mouseEnd, football.vertex1, football.vertex2), intersection(mouseStart, mouseEnd, football.vertex2, football.vertex3), intersection(mouseStart, mouseEnd, football.vertex3, football.vertex1)];
@@ -217,24 +208,16 @@ function reset(){
 }
 //Handle the collision between the mouse and the football
 function calculateCollision(intersectionPoints, mouseEnd) {
-    const mouseStart = {x: mouse.position.x, y: mouse.position.y};
+    const mouseStart = {x: mouse.history[0].x, y: mouse.history[0].y};
     //Find how far the mouse is from the COM of the football --> how much the football should spin
     const spinAmt = distancePointToInfiniteLine(football.center, mouseStart, mouseEnd);
     //Find the angle of the mouse movement
     const angle = Math.atan2(mouseEnd.y - mouseStart.y, mouseEnd.x - mouseStart.x);
-    //Calculate the force of the mouse onto the football (normalize to ~60fps baseline)
+    //Calculate the force of the mouse onto the football
     const first = mouse.history[0];
     const last = mouse.history[mouse.history.length - 1];
-
-    const dx = last.x - first.x;
-    const dy = last.y - first.y;
-
-    const dt = (last.t - first.t) / 1000;
-
-    const mouseSpeed = dt > 0
-        ? Math.hypot(dx, dy) / dt
-        : 0;
-
+    const mouseSpeed = Math.hypot(last.x - first.x, last.y - first.y) / ((last.t - first.t) / 1000);
+    //Calculate the impulse on the football
     const force = power * mouseSpeed;    
     const time = .3;
     const impulse = force*time;
@@ -245,7 +228,7 @@ function calculateCollision(intersectionPoints, mouseEnd) {
     football.stopped = false;
     mouse.history = [];
     if(football.kickoff){
-        kickLength = Math.min(Math.abs(football.velocity.y/800), 2.5);
+        kickLength = Math.min(Math.abs(football.velocity.y/football.inertia), 2.5);
         if(game.homeTurn){
             football.velocity.y = -250;
         }
@@ -285,6 +268,17 @@ function calculateVertices() {
     const vertex1 = {x: -football.sideLengths[0]/3, y: football.sideLengths[0]/3};
     const vertex2 = {x: -football.sideLengths[0]/3, y: -2*football.sideLengths[0]/3};
     const vertex3 = {x: 2*football.sideLengths[0]/3, y: football.sideLengths[0]/3};
+
+    const designVertices = [
+        {x: -football.sideLengths[0]/4, y: -football.sideLengths[0]/4},
+        {x: football.sideLengths[0]/4, y: football.sideLengths[0]/4},
+        {x: -football.sideLengths[0]/4+football.sideLengths[0]/24, y: -football.sideLengths[0]/24},
+        {x: -football.sideLengths[0]/24, y: -football.sideLengths[0]/4+football.sideLengths[0]/24},
+        {x: -football.sideLengths[0]/12, y: football.sideLengths[0]/12},
+        {x: football.sideLengths[0]/12, y: -football.sideLengths[0]/12},
+        {x: football.sideLengths[0]/4-football.sideLengths[0]/24, y: football.sideLengths[0]/24},
+        {x: football.sideLengths[0]/24, y: football.sideLengths[0]/4-football.sideLengths[0]/24}
+    ]
     //Rotate and translate to the football's position
     football.vertex1.x = vertex1.x * Math.cos(football.angle) - vertex1.y * Math.sin(football.angle) + football.center.x;
     football.vertex1.y = vertex1.x * Math.sin(football.angle) + vertex1.y * Math.cos(football.angle) + football.center.y;
@@ -292,6 +286,11 @@ function calculateVertices() {
     football.vertex2.y = vertex2.x * Math.sin(football.angle) + vertex2.y * Math.cos(football.angle) + football.center.y;
     football.vertex3.x = vertex3.x * Math.cos(football.angle) - vertex3.y * Math.sin(football.angle) + football.center.x;
     football.vertex3.y = vertex3.x * Math.sin(football.angle) + vertex3.y * Math.cos(football.angle) + football.center.y;
+
+    for (let i = 0; i < designVertices.length; i++) {
+        football.design[i].x = designVertices[i].x * Math.cos(football.angle) - designVertices[i].y * Math.sin(football.angle) + football.center.x;
+        football.design[i].y = designVertices[i].x * Math.sin(football.angle) + designVertices[i].y * Math.cos(football.angle) + football.center.y;
+    }
 }
 //Find the distance from a point to an infinite line defined by two points
 function distancePointToInfiniteLine(point, a, b) {
@@ -469,6 +468,8 @@ function draw(timeStamp) {
     ctx.rect(table.x, table.y, table.width, table.height);
     ctx.strokeStyle = "black";
     ctx.stroke();
+    ctx.fillStyle = "tan";
+    ctx.fill();
 
     //Draw the sides of the football
     ctx.beginPath();
@@ -478,37 +479,55 @@ function draw(timeStamp) {
     ctx.lineTo(football.vertex1.x, football.vertex1.y);
     ctx.strokeStyle = "Black";
     ctx.stroke();
+    ctx.fillStyle = "Brown";
     ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(football.design[0].x, football.design[0].y);
+    ctx.lineTo(football.design[1].x, football.design[1].y);
+    ctx.moveTo(football.design[2].x, football.design[2].y);
+    ctx.lineTo(football.design[3].x, football.design[3].y);
+    ctx.moveTo(football.design[4].x, football.design[4].y);
+    ctx.lineTo(football.design[5].x, football.design[5].y);
+    ctx.moveTo(football.design[6].x, football.design[6].y);
+    ctx.lineTo(football.design[7].x, football.design[7].y);
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = football.sideLengths[0]/15;
+    ctx.stroke();
+    ctx.lineWidth = 1;
 
     //Drawing the scoreboard
     ctx.fillStyle = "black";
+    ctx.strokeStyle = "black"
     ctx.font = "bold 32px Arial";
     ctx.textBaseline = 'bottom';
     ctx.textAlign = 'center';
 
     let data = [
-        [game.homeScore, game.homeOffs], 
-        [game.awayScore, game.awayOffs],
+        ["Home", game.homeScore, game.homeOffs], 
+        ["Away", game.awayScore, game.awayOffs],
     ];
     
-    const cellWidth = [75, 150];
+    const cellWidth = 75;
     const cellHeight = 40;
-    let startX = table.x-cellWidth[0];
+    const startX = table.x
     const startY = table.y-10-cellHeight*2;
 
-    for (let row = 0; row < data.length; row++) {
-        let x = startX;
-        for (let col = 0; col < data[row].length; col++) {
-            const y = startY + row * cellHeight;
-            x+=cellWidth[col%2];
-
-            // Draw cell border
-            ctx.strokeRect(x, y, cellWidth[(col+1)%2], cellHeight);
-
-            // Draw cell text
-            ctx.fillText(data[row][col], x + cellWidth[(col+1)%2] / 2, y + cellHeight);
-        }
-    }
+    ctx.strokeRect(startX, startY, 4*cellWidth, cellHeight*2);
+    ctx.beginPath();
+    ctx.moveTo(startX, startY+cellHeight);
+    ctx.lineTo(startX+4*cellWidth, startY+cellHeight);
+    ctx.moveTo(startX+2*cellWidth, startY);
+    ctx.lineTo(startX+2*cellWidth, startY+2*cellHeight);
+    ctx.moveTo(startX+3*cellWidth, startY);
+    ctx.lineTo(startX+3*cellWidth, startY+2*cellHeight);
+    ctx.stroke();
+    ctx.fillText("Home", startX+cellWidth, startY+cellHeight);
+    ctx.fillText("Away", startX+cellWidth, startY+2*cellHeight);
+    ctx.fillText(game.homeScore, startX+5*cellWidth/2, startY+cellHeight);
+    ctx.fillText(game.awayScore, startX+5*cellWidth/2, startY+2*cellHeight);
+    ctx.fillText(game.homeOffs, startX+7*cellWidth/2, startY+cellHeight);
+    ctx.fillText(game.awayOffs, startX+7*cellWidth/2, startY+2*cellHeight);
 
     window.requestAnimationFrame(draw);
 }
