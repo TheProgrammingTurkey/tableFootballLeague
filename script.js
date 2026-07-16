@@ -16,7 +16,8 @@ let game = {
     awayScore: 0,
     homeOffs: 0,
     awayOffs: 0,
-    homeTurn: true
+    homeTurn: true,
+    playing: true
 };
 //Set up the table
 const table = {
@@ -35,16 +36,24 @@ let football = {
     mass: 1,
     velocity: new Vec2(0, 0),
     angularVelocity: 0,
-    angle: Math.PI/4,
+    angle2D: 5*Math.PI/4,
+    angle3D: 0,
     stopped: true,
     inertia: 500,
     kickoff: true,
-    design: [new Vec2(5,5), new Vec2(53,53), new Vec2(0,0), new Vec2(0,0), new Vec2(0,0), new Vec2(0,0), new Vec2(0,0), new Vec2(0,0)]
+    design: [new Vec2(5,5), new Vec2(53,53), new Vec2(0,0), new Vec2(0,0), new Vec2(0,0), new Vec2(0,0), new Vec2(0,0), new Vec2(0,0)],
+    fieldGoalScored: false,
 };
 //Set up the mouse
 let mouse = {
     history: []
 };
+//Set up the field goal
+const goal = {
+    vertex1: new Vec2(table.x+200, table.y),
+    vertex2: new Vec2(table.x+table.width-200, table.y+300),
+    vertex3: new Vec2(table.x+table.width/2, table.y+400),
+}
 //Calculate the center of mass of the football
 calculateVertices();
 
@@ -94,11 +103,11 @@ document.addEventListener("pointermove", function(event) {
     //Handle the result of the collision
     calculateCollision(intersectionPoints, new Vec2(event.clientX, event.clientY));
 });
-//Run each tick
-function update() {
+//Run each tick while playing
+function updatePlaying(){
     //Move the football
     football.center.addScale(football.velocity, secondsPassed);
-    football.angle += football.angularVelocity*secondsPassed;
+    football.angle2D += football.angularVelocity*secondsPassed;
     //Calculate the vertices of the football
     calculateVertices();
     //Friction
@@ -136,6 +145,7 @@ function update() {
             game.homeScore+=6;
             game.homeOffs = 0;
             game.awayOffs = 0;
+            game.playing = false;
             reset();
         }//Check for a safety for the away team (top player)
         else if(checkTouchdown(0) || (checkOff(0) && !game.homeTurn)){
@@ -158,6 +168,7 @@ function update() {
             game.awayScore+=6;
             game.homeOffs = 0;
             game.awayOffs = 0;
+            game.playing = false;
             reset();
         }//Check for a safety for the home team (bottom player)
         else if(checkTouchdown(1) || (checkOff(1) && game.homeTurn)){
@@ -170,27 +181,59 @@ function update() {
             game.awayScore+=3;
             game.homeOffs = 0;
             game.awayOffs = 0;
+            game.playing = false;
+            reset();
         }//Field Goal
         else if(game.awayOffs == 3){
             game.homeScore+=3;
             game.homeOffs = 0;
             game.awayOffs = 0;
+            game.playing = false;
+            reset();
         }
         if(checkInPlay()){
             switchTurn();
         }
     }
 }
+//Run each tick while kicking
+function updateKicking(){
+    //Move the football
+    football.center.addScale(football.velocity, secondsPassed);
+    football.angle3D += football.angularVelocity*secondsPassed/40;
+    
+    //Calculate the vertices of the football
+    calculateVertices();
+    if(!football.stopped){
+        football.sideLengths[0]=Math.max(football.sideLengths[0]-20*secondsPassed, 20);
+        football.velocity.x*=61*secondsPassed;
+        football.velocity.y+=250*secondsPassed;
+        kickTime+=secondsPassed;
+        if(!football.fieldGoalScored && kickTime > 3 && football.center.x > goal.vertex1.x && football.center.x < goal.vertex2.x && football.center.y < goal.vertex2.y){
+            if(game.homeTurn){
+                game.homeScore+=1;
+            }
+            else{
+                game.awayScore+=1
+            }
+            football.fieldGoalScored = true
+        }
+    }
+    if(kickTime > 6){
+        game.playing = true;
+        reset();
+    }
+}
 //Check if the mouse hit any of the sides of the football
-function checkBallHit(mouseEnd) {
+function checkBallHit(mouseEnd){
     let mouseStart = {x: mouse.history[0].x, y: mouse.history[0].y};
     //If the contact comes from within the football, dont do anything
-    if(isPointInTriangle(mouseStart, football.vertex1, football.vertex2, football.vertex3)) return [null, null, null];
+    if(isPointInTriangle2D(mouseStart, football.vertex1, football.vertex2, football.vertex3)) return [null, null, null];
     return [intersection(mouseStart, mouseEnd, football.vertex1, football.vertex2), intersection(mouseStart, mouseEnd, football.vertex2, football.vertex3), intersection(mouseStart, mouseEnd, football.vertex3, football.vertex1)];
 }
 //Reset for kickoff (top refers to if the current player is on the top)
 function reset(){
-    if(game.homeTurn){
+    if(game.homeTurn || !game.playing){
         football.center = new Vec2(canvas.width/2, canvas.height-table.y);
         game.homeTurn = true;
     }
@@ -198,21 +241,23 @@ function reset(){
         football.center = new Vec2(canvas.width/2, table.y);
         game.homeTurn = false;
     }
+    football.stopped = true;
+    football.angularVelocity = 0
     football.sideLengths = [58,82];
     football.velocity = new Vec2(0,0);
-    football.angle = Math.PI/4;
+    football.angle2D = Math.PI/4;
     football.kickoff = true;
     kickLength = 0;
     kickTime = 0;
-
+    football.angle3D = 0;
 }
 //Handle the collision between the mouse and the football
-function calculateCollision(intersectionPoints, mouseEnd) {
+function calculateCollision(intersectionPoints, mouseEnd){
     const mouseStart = {x: mouse.history[0].x, y: mouse.history[0].y};
     //Find how far the mouse is from the COM of the football --> how much the football should spin
     const spinAmt = distancePointToInfiniteLine(football.center, mouseStart, mouseEnd);
-    //Find the angle of the mouse movement
-    const angle = Math.atan2(mouseEnd.y - mouseStart.y, mouseEnd.x - mouseStart.x);
+    //Find the angle2D of the mouse movement
+    const angle2D = Math.atan2(mouseEnd.y - mouseStart.y, mouseEnd.x - mouseStart.x);
     //Calculate the force of the mouse onto the football
     const first = mouse.history[0];
     const last = mouse.history[mouse.history.length - 1];
@@ -222,12 +267,18 @@ function calculateCollision(intersectionPoints, mouseEnd) {
     const time = .3;
     const impulse = force*time;
     //Apply the impulse to the football's velocity
-    football.velocity.x = (impulse/football.mass)*Math.cos(angle)/Math.max(1, Math.abs(spinAmt)/10);
-    football.velocity.y = (impulse/football.mass)*Math.sin(angle)/Math.max(1, Math.abs(spinAmt)/10);
+    football.velocity.x = (impulse/football.mass)*Math.cos(angle2D)/Math.max(1, Math.abs(spinAmt)/10);
+    football.velocity.y = (impulse/football.mass)*Math.sin(angle2D)/Math.max(1, Math.abs(spinAmt)/10);
     football.angularVelocity = (impulse/football.mass)*spinAmt/football.inertia;
     football.stopped = false;
     mouse.history = [];
-    if(football.kickoff){
+    if(!game.playing){       
+        football.velocity.x/=5;
+        football.velocity.y = Math.max(Math.min(football.velocity.y/2, -200), -500);
+        football.angularVelocity = football.velocity.y;
+        kickTime = 0;
+    }
+    else if(football.kickoff){
         kickLength = Math.min(Math.abs(football.velocity.y/football.inertia), 2.5);
         if(game.homeTurn){
             football.velocity.y = -250;
@@ -240,7 +291,7 @@ function calculateCollision(intersectionPoints, mouseEnd) {
     }
 }
 //Check if football is in play
-function checkInPlay() {
+function checkInPlay(){
     return football.vertex1.y >= table.y && football.vertex2.y >= table.y && football.vertex3.y >= table.y && football.vertex1.y <= table.y + table.height && football.vertex2.y <= table.y + table.height && football.vertex3.y <= table.y + table.height;
 }
 //Check if the football is off the edge of the table for a touchdown (team is 0 when its the home team (player on the bottom) that just hit)
@@ -263,13 +314,13 @@ function switchTurn(){
     }
 }
 //Calculate where each vertex should be
-function calculateVertices() {
+function calculateVertices(){
     //Set up with respect to origin
-    const vertex1 = {x: -football.sideLengths[0]/3, y: football.sideLengths[0]/3};
-    const vertex2 = {x: -football.sideLengths[0]/3, y: -2*football.sideLengths[0]/3};
-    const vertex3 = {x: 2*football.sideLengths[0]/3, y: football.sideLengths[0]/3};
+    let vertex1 = {x: -football.sideLengths[0]/3, y: football.sideLengths[0]/3};
+    let vertex2 = {x: -football.sideLengths[0]/3, y: -2*football.sideLengths[0]/3};
+    let vertex3 = {x: 2*football.sideLengths[0]/3, y: football.sideLengths[0]/3};
 
-    const designVertices = [
+    let designVertices = [
         {x: -football.sideLengths[0]/4, y: -football.sideLengths[0]/4},
         {x: football.sideLengths[0]/4, y: football.sideLengths[0]/4},
         {x: -football.sideLengths[0]/4+football.sideLengths[0]/24, y: -football.sideLengths[0]/24},
@@ -280,20 +331,26 @@ function calculateVertices() {
         {x: football.sideLengths[0]/24, y: football.sideLengths[0]/4-football.sideLengths[0]/24}
     ]
     //Rotate and translate to the football's position
-    football.vertex1.x = vertex1.x * Math.cos(football.angle) - vertex1.y * Math.sin(football.angle) + football.center.x;
-    football.vertex1.y = vertex1.x * Math.sin(football.angle) + vertex1.y * Math.cos(football.angle) + football.center.y;
-    football.vertex2.x = vertex2.x * Math.cos(football.angle) - vertex2.y * Math.sin(football.angle) + football.center.x;
-    football.vertex2.y = vertex2.x * Math.sin(football.angle) + vertex2.y * Math.cos(football.angle) + football.center.y;
-    football.vertex3.x = vertex3.x * Math.cos(football.angle) - vertex3.y * Math.sin(football.angle) + football.center.x;
-    football.vertex3.y = vertex3.x * Math.sin(football.angle) + vertex3.y * Math.cos(football.angle) + football.center.y;
+    football.vertex1.x = vertex1.x * Math.cos(football.angle2D) - vertex1.y * Math.sin(football.angle2D) + football.center.x;
+    football.vertex1.y = vertex1.x * Math.sin(football.angle2D) + vertex1.y * Math.cos(football.angle2D) + football.center.y;
+    football.vertex2.x = vertex2.x * Math.cos(football.angle2D) - vertex2.y * Math.sin(football.angle2D) + football.center.x;
+    football.vertex2.y = vertex2.x * Math.sin(football.angle2D) + vertex2.y * Math.cos(football.angle2D) + football.center.y;
+    football.vertex3.x = vertex3.x * Math.cos(football.angle2D) - vertex3.y * Math.sin(football.angle2D) + football.center.x;
+    football.vertex3.y = vertex3.x * Math.sin(football.angle2D) + vertex3.y * Math.cos(football.angle2D) + football.center.y;
+    football.vertex1.y = flip3D(football.vertex1).y;
+    football.vertex2.y = flip3D(football.vertex2).y;
+    football.vertex3.y = flip3D(football.vertex3).y;
 
     for (let i = 0; i < designVertices.length; i++) {
-        football.design[i].x = designVertices[i].x * Math.cos(football.angle) - designVertices[i].y * Math.sin(football.angle) + football.center.x;
-        football.design[i].y = designVertices[i].x * Math.sin(football.angle) + designVertices[i].y * Math.cos(football.angle) + football.center.y;
+        football.design[i].x = designVertices[i].x * Math.cos(football.angle2D) - designVertices[i].y * Math.sin(football.angle2D) + football.center.x;
+        football.design[i].y = designVertices[i].x * Math.sin(football.angle2D) + designVertices[i].y * Math.cos(football.angle2D) + football.center.y;
+        football.design[i].y = flip3D(football.design[i]).y;
     }
+
+    
 }
 //Find the distance from a point to an infinite line defined by two points
-function distancePointToInfiniteLine(point, a, b) {
+function distancePointToInfiniteLine(point, a, b){
     const dx = b.x - a.x;
     const dy = b.y - a.y;
 
@@ -306,8 +363,8 @@ function distancePointToInfiniteLine(point, a, b) {
         dy * (point.x - a.x)
     ) / length;
 }
-//Check if a point is inside a triangle
-function isPointInTriangle(P, A, B, C) {
+//Check if a point is inside a triangle2D
+function isPointInTriangle2D(P, A, B, C){
     const v0x = C.x - A.x;
     const v0y = C.y - A.y;
     const v1x = B.x - A.x;
@@ -329,7 +386,7 @@ function isPointInTriangle(P, A, B, C) {
     return u > 0 && v > 0 && (u + v < 1);
 }
 //Find the intersection point of two lines
-function intersection(A, B, C, D) {
+function intersection(A, B, C, D){
     const EPS = 1e-9;
 
     function det(a, b, c, d) {
@@ -454,80 +511,178 @@ function intersection(A, B, C, D) {
         ? point
         : null;
 }
+//Calculate the spin of the football
+function flip3D(point) {
+    const c = Math.cos(football.angle3D);
+    // Move to center
+    let y = point.y - football.center.y;
+
+    // Rotate about X axis
+    let y2 = y * c;
+
+    return new Vec2(point.x, football.center.y+y2);
+}
 //Draw everything
-function draw(timeStamp) {
+function draw(timeStamp){
     //Calculate how much time has passed since the last frame
     secondsPassed = (timeStamp - oldTimeStamp) / 1000;
     oldTimeStamp = timeStamp;
     //Clear the canvas
-    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);    
-    update();
-    
-    //Draw the table
-    ctx.beginPath();
-    ctx.rect(table.x, table.y, table.width, table.height);
-    ctx.strokeStyle = "black";
-    ctx.stroke();
-    ctx.fillStyle = "tan";
-    ctx.fill();
+    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight); 
 
-    //Draw the sides of the football
-    ctx.beginPath();
-    ctx.moveTo(football.vertex1.x, football.vertex1.y);
-    ctx.lineTo(football.vertex2.x, football.vertex2.y);
-    ctx.lineTo(football.vertex3.x, football.vertex3.y);
-    ctx.lineTo(football.vertex1.x, football.vertex1.y);
-    ctx.strokeStyle = "Black";
-    ctx.stroke();
-    ctx.fillStyle = "Brown";
-    ctx.fill();
+    if(game.playing){
+        updatePlaying();
+        //Draw the table
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.rect(table.x, table.y, table.width, table.height);
+        ctx.strokeStyle = "black";
+        ctx.stroke();
+        ctx.fillStyle = "tan";
+        ctx.fill();
 
-    ctx.beginPath();
-    ctx.moveTo(football.design[0].x, football.design[0].y);
-    ctx.lineTo(football.design[1].x, football.design[1].y);
-    ctx.moveTo(football.design[2].x, football.design[2].y);
-    ctx.lineTo(football.design[3].x, football.design[3].y);
-    ctx.moveTo(football.design[4].x, football.design[4].y);
-    ctx.lineTo(football.design[5].x, football.design[5].y);
-    ctx.moveTo(football.design[6].x, football.design[6].y);
-    ctx.lineTo(football.design[7].x, football.design[7].y);
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = football.sideLengths[0]/15;
-    ctx.stroke();
-    ctx.lineWidth = 1;
+        //Draw the sides of the football
+        ctx.beginPath();
+        ctx.moveTo(football.vertex1.x, football.vertex1.y);
+        ctx.lineTo(football.vertex2.x, football.vertex2.y);
+        ctx.lineTo(football.vertex3.x, football.vertex3.y);
+        ctx.lineTo(football.vertex1.x, football.vertex1.y);
+        ctx.strokeStyle = "Black";
+        ctx.stroke();
+        ctx.fillStyle = "Brown";
+        ctx.fill();
 
-    //Drawing the scoreboard
-    ctx.fillStyle = "black";
-    ctx.strokeStyle = "black"
-    ctx.font = "bold 32px Arial";
-    ctx.textBaseline = 'bottom';
-    ctx.textAlign = 'center';
+        //Draw the laces on the football
+        ctx.beginPath();
+        ctx.moveTo(football.design[0].x, football.design[0].y);
+        ctx.lineTo(football.design[1].x, football.design[1].y);
+        ctx.moveTo(football.design[2].x, football.design[2].y);
+        ctx.lineTo(football.design[3].x, football.design[3].y);
+        ctx.moveTo(football.design[4].x, football.design[4].y);
+        ctx.lineTo(football.design[5].x, football.design[5].y);
+        ctx.moveTo(football.design[6].x, football.design[6].y);
+        ctx.lineTo(football.design[7].x, football.design[7].y);
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = football.sideLengths[0]/15;
+        ctx.stroke();
+        ctx.lineWidth = 1;
 
-    let data = [
-        ["Home", game.homeScore, game.homeOffs], 
-        ["Away", game.awayScore, game.awayOffs],
-    ];
-    
-    const cellWidth = 75;
-    const cellHeight = 40;
-    const startX = table.x
-    const startY = table.y-10-cellHeight*2;
+        //Drawing the scoreboard
+        ctx.fillStyle = "black";
+        ctx.strokeStyle = "black"
+        ctx.font = "bold 32px Arial";
+        ctx.textBaseline = 'bottom';
+        ctx.textAlign = 'center';
 
-    ctx.strokeRect(startX, startY, 4*cellWidth, cellHeight*2);
-    ctx.beginPath();
-    ctx.moveTo(startX, startY+cellHeight);
-    ctx.lineTo(startX+4*cellWidth, startY+cellHeight);
-    ctx.moveTo(startX+2*cellWidth, startY);
-    ctx.lineTo(startX+2*cellWidth, startY+2*cellHeight);
-    ctx.moveTo(startX+3*cellWidth, startY);
-    ctx.lineTo(startX+3*cellWidth, startY+2*cellHeight);
-    ctx.stroke();
-    ctx.fillText("Home", startX+cellWidth, startY+cellHeight);
-    ctx.fillText("Away", startX+cellWidth, startY+2*cellHeight);
-    ctx.fillText(game.homeScore, startX+5*cellWidth/2, startY+cellHeight);
-    ctx.fillText(game.awayScore, startX+5*cellWidth/2, startY+2*cellHeight);
-    ctx.fillText(game.homeOffs, startX+7*cellWidth/2, startY+cellHeight);
-    ctx.fillText(game.awayOffs, startX+7*cellWidth/2, startY+2*cellHeight);
+        let data = [
+            ["Home", game.homeScore, game.homeOffs], 
+            ["Away", game.awayScore, game.awayOffs],
+        ];
+        
+        const cellWidth = 75;
+        const cellHeight = 40;
+        const startX = table.x
+        const startY = table.y-10-cellHeight*2;
+
+        ctx.strokeRect(startX, startY, 4*cellWidth, cellHeight*2);
+        ctx.beginPath();
+        ctx.moveTo(startX, startY+cellHeight);
+        ctx.lineTo(startX+4*cellWidth, startY+cellHeight);
+        ctx.moveTo(startX+2*cellWidth, startY);
+        ctx.lineTo(startX+2*cellWidth, startY+2*cellHeight);
+        ctx.moveTo(startX+3*cellWidth, startY);
+        ctx.lineTo(startX+3*cellWidth, startY+2*cellHeight);
+        ctx.stroke();
+        ctx.fillText("Home", startX+cellWidth, startY+cellHeight);
+        ctx.fillText("Away", startX+cellWidth, startY+2*cellHeight);
+        ctx.fillText(game.homeScore, startX+5*cellWidth/2, startY+cellHeight);
+        ctx.fillText(game.awayScore, startX+5*cellWidth/2, startY+2*cellHeight);
+        ctx.fillText(game.homeOffs, startX+7*cellWidth/2, startY+cellHeight);
+        ctx.fillText(game.awayOffs, startX+7*cellWidth/2, startY+2*cellHeight);
+    }
+    else{
+        updateKicking();
+        if(kickTime < 2){
+            //Draw the goal posts
+            ctx.beginPath();
+            ctx.moveTo(goal.vertex1.x, goal.vertex1.y)
+            ctx.lineTo(goal.vertex1.x, goal.vertex2.y)
+            ctx.lineTo(goal.vertex2.x, goal.vertex2.y)
+            ctx.lineTo(goal.vertex2.x, goal.vertex1.y)
+            ctx.moveTo(goal.vertex3.x, goal.vertex2.y)
+            ctx.lineTo(goal.vertex3.x, goal.vertex3.y)
+            ctx.lineWidth = 20;
+            ctx.strokeStyle = "Yellow"
+            ctx.stroke()
+            
+            //Draw the sides of the football
+            ctx.beginPath();
+            ctx.moveTo(football.vertex1.x, football.vertex1.y);
+            ctx.lineTo(football.vertex2.x, football.vertex2.y);
+            ctx.lineTo(football.vertex3.x, football.vertex3.y);
+            ctx.lineTo(football.vertex1.x, football.vertex1.y);
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = "Black";
+            ctx.stroke();
+            ctx.fillStyle = "Brown";
+            ctx.fill();
+
+            //Draw the laces on the football
+            ctx.beginPath();
+            ctx.moveTo(football.design[0].x, football.design[0].y);
+            ctx.lineTo(football.design[1].x, football.design[1].y);
+            ctx.moveTo(football.design[2].x, football.design[2].y);
+            ctx.lineTo(football.design[3].x, football.design[3].y);
+            ctx.moveTo(football.design[4].x, football.design[4].y);
+            ctx.lineTo(football.design[5].x, football.design[5].y);
+            ctx.moveTo(football.design[6].x, football.design[6].y);
+            ctx.lineTo(football.design[7].x, football.design[7].y);
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = football.sideLengths[0]/15;
+            ctx.stroke();
+            ctx.lineWidth = 1;
+        }
+        else{
+            //Draw the sides of the football
+            ctx.beginPath();
+            ctx.moveTo(football.vertex1.x, football.vertex1.y);
+            ctx.lineTo(football.vertex2.x, football.vertex2.y);
+            ctx.lineTo(football.vertex3.x, football.vertex3.y);
+            ctx.lineTo(football.vertex1.x, football.vertex1.y);
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = "Black";
+            ctx.stroke();
+            ctx.fillStyle = "Brown";
+            ctx.fill();
+
+            //Draw the laces on the football
+            ctx.beginPath();
+            ctx.moveTo(football.design[0].x, football.design[0].y);
+            ctx.lineTo(football.design[1].x, football.design[1].y);
+            ctx.moveTo(football.design[2].x, football.design[2].y);
+            ctx.lineTo(football.design[3].x, football.design[3].y);
+            ctx.moveTo(football.design[4].x, football.design[4].y);
+            ctx.lineTo(football.design[5].x, football.design[5].y);
+            ctx.moveTo(football.design[6].x, football.design[6].y);
+            ctx.lineTo(football.design[7].x, football.design[7].y);
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = football.sideLengths[0]/15;
+            ctx.stroke();
+            ctx.lineWidth = 1;
+
+            //Draw the goal posts
+            ctx.beginPath();
+            ctx.moveTo(goal.vertex1.x, goal.vertex1.y)
+            ctx.lineTo(goal.vertex1.x, goal.vertex2.y)
+            ctx.lineTo(goal.vertex2.x, goal.vertex2.y)
+            ctx.lineTo(goal.vertex2.x, goal.vertex1.y)
+            ctx.moveTo(goal.vertex3.x, goal.vertex2.y)
+            ctx.lineTo(goal.vertex3.x, goal.vertex3.y)
+            ctx.lineWidth = 20;
+            ctx.strokeStyle = "Yellow"
+            ctx.stroke()
+        }
+    }
 
     window.requestAnimationFrame(draw);
 }
