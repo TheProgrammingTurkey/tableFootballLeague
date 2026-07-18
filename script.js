@@ -17,7 +17,7 @@ let game = {
     homeOffs: 0,
     awayOffs: 0,
     homeTurn: true,
-    playing: true
+    playing: false
 };
 //Set up the table
 const table = {
@@ -143,8 +143,6 @@ function updatePlaying(){
         //Check if its a touchdown for the home team (bottom player)
         if(checkTouchdown(0) && game.homeTurn){
             game.homeScore+=6;
-            game.homeOffs = 0;
-            game.awayOffs = 0;
             game.playing = false;
             reset();
         }//Check for a safety for the away team (top player)
@@ -166,8 +164,6 @@ function updatePlaying(){
         }//Check if its a touchdown for the away team (top player)
         else if(checkTouchdown(1) && !game.homeTurn){
             game.awayScore+=6;
-            game.homeOffs = 0;
-            game.awayOffs = 0;
             game.playing = false;
             reset();
         }//Check for a safety for the home team (bottom player)
@@ -177,17 +173,7 @@ function updatePlaying(){
             game.awayOffs = 0;
             reset();
         }//Field Goal
-        if(game.homeOffs == 3){
-            game.awayScore+=3;
-            game.homeOffs = 0;
-            game.awayOffs = 0;
-            game.playing = false;
-            reset();
-        }//Field Goal
-        else if(game.awayOffs == 3){
-            game.homeScore+=3;
-            game.homeOffs = 0;
-            game.awayOffs = 0;
+        if(game.homeOffs == 3 || game.awayOffs == 3){
             game.playing = false;
             reset();
         }
@@ -209,19 +195,31 @@ function updateKicking(){
         football.velocity.x*=61*secondsPassed;
         football.velocity.y+=250*secondsPassed;
         kickTime+=secondsPassed;
-        if(!football.fieldGoalScored && kickTime > 3 && football.center.x > goal.vertex1.x && football.center.x < goal.vertex2.x && football.center.y < goal.vertex2.y){
+        if(!football.fieldGoalScored && kickTime > 2.5 && football.center.x > goal.vertex1.x && football.center.x < goal.vertex2.x && football.center.y < goal.vertex2.y){
             if(game.homeTurn){
-                game.homeScore+=1;
+                if(game.awayOffs == 3){
+                    game.homeScore+=3;
+                }
+                else{
+                    game.homeScore+=1;
+                }
             }
             else{
-                game.awayScore+=1
+                if(game.homeOffs == 3){
+                    game.awayScore+=3;
+                }
+                else{
+                    game.awayScore+=1;
+                }
             }
             football.fieldGoalScored = true
         }
     }
-    if(kickTime > 6){
+    if(kickTime > 5){
         game.playing = true;
         reset();
+        game.homeOffs = 0;
+        game.awayOffs = 0;
     }
 }
 //Check if the mouse hit any of the sides of the football
@@ -233,23 +231,29 @@ function checkBallHit(mouseEnd){
 }
 //Reset for kickoff (top refers to if the current player is on the top)
 function reset(){
-    if(game.homeTurn || !game.playing){
-        football.center = new Vec2(canvas.width/2, canvas.height-table.y);
-        game.homeTurn = true;
+    if(game.playing){
+        if(game.homeTurn){
+            football.center = new Vec2(canvas.width/2, canvas.height-table.y);
+            game.homeTurn = true;
+        }
+        else{
+            football.center = new Vec2(canvas.width/2, table.y);
+            game.homeTurn = false;
+        }
     }
     else{
-        football.center = new Vec2(canvas.width/2, table.y);
-        game.homeTurn = false;
+        football.center = new Vec2(canvas.width/2, canvas.height-table.y);
     }
     football.stopped = true;
     football.angularVelocity = 0
     football.sideLengths = [58,82];
     football.velocity = new Vec2(0,0);
-    football.angle2D = Math.PI/4;
+    football.angle2D = -3*Math.PI/4;
     football.kickoff = true;
     kickLength = 0;
     kickTime = 0;
     football.angle3D = 0;
+    football.fieldGoal = false;
 }
 //Handle the collision between the mouse and the football
 function calculateCollision(intersectionPoints, mouseEnd){
@@ -602,7 +606,17 @@ function draw(timeStamp){
     }
     else{
         updateKicking();
-        if(kickTime < 2){
+
+        //Draw the table
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.rect(table.x, goal.vertex3.y-10, table.width, table.y+table.height);
+        ctx.strokeStyle = "black";
+        ctx.stroke();
+        ctx.fillStyle = "tan";
+        ctx.fill();
+
+        if(kickTime < 2.5){
             //Draw the goal posts
             ctx.beginPath();
             ctx.moveTo(goal.vertex1.x, goal.vertex1.y)
@@ -612,7 +626,7 @@ function draw(timeStamp){
             ctx.moveTo(goal.vertex3.x, goal.vertex2.y)
             ctx.lineTo(goal.vertex3.x, goal.vertex3.y)
             ctx.lineWidth = 20;
-            ctx.strokeStyle = "Yellow"
+            ctx.strokeStyle = "yellow"
             ctx.stroke()
             
             //Draw the sides of the football
