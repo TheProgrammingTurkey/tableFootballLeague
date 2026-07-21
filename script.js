@@ -109,6 +109,7 @@ document.addEventListener("keyup", event => {
 
 //When the mouse is moved
 document.addEventListener("pointermove", function(event) {
+    if(!game.homeTurn) return;
     const now = performance.now(); //logs the time of the event in milliseconds from the start of the program
 
     // Logs the position of the mouse and the timestamp
@@ -137,6 +138,10 @@ document.addEventListener("pointermove", function(event) {
 });
 //Run each tick while playing
 function updatePlaying(){
+    //If its the Ai's turn to move
+    if(football.stopped && !game.homeTurn){
+        aiMove();
+    }
     //Move the football
     football.center.addScale(football.velocity, secondsPassed);
     football.angle2D += football.angularVelocity*secondsPassed;
@@ -172,6 +177,9 @@ function updatePlaying(){
         football.velocity.y = 0;
         football.angularVelocity = 0;
         football.stopped = true;
+        if(checkInPlay()){
+            switchTurn();
+        }
         //Check if its a touchdown for the home team (bottom player)
         if(checkTouchdown(0) && game.homeTurn){
             game.homeScore+=6;
@@ -209,9 +217,6 @@ function updatePlaying(){
             game.playing = false;
             reset();
         }
-        if(checkInPlay()){
-            switchTurn();
-        }
         if(game.homeScore >= 30 || game.awayScore >= 30){
             if(localStorage.getItem("gameType") == "season"){
                 let standings = JSON.parse(localStorage.getItem("standings"));
@@ -242,6 +247,11 @@ function updatePlaying(){
 }
 //Run each tick while kicking
 function updateKicking(){
+    //If its the Ai's turn to move
+    if(football.stopped && !game.homeTurn){
+        aiMove();
+    }
+
     //Move the football
     football.center.addScale(football.velocity, secondsPassed);
     football.angle3D += football.angularVelocity*secondsPassed/40;
@@ -278,6 +288,31 @@ function updateKicking(){
         reset();
         game.homeOffs = 0;
         game.awayOffs = 0;
+    }
+}
+//Let the Ai decide how hard to hit the ball
+function aiMove(){
+    //football.velocity.y = (table.y+table.height-football.center.y)*3 --- perfect power
+    const aiPowerError = Math.random()*2
+    football.velocity.y = (table.y+table.height-football.center.y)*(1.5+aiPowerError)
+    football.angularVelocity = Math.random()*35;
+    football.stopped = false;
+    if(!game.playing){       
+        football.velocity.y = (goal.vertex2.y-football.center.y)*(2-Math.random()/3)
+        football.velocity.x = 60*(Math.random()-.5);
+        football.angularVelocity = football.velocity.y;
+        kickTime = 0;
+    }
+    else if(football.kickoff){
+        kickLength = Math.min(Math.abs(football.velocity.y/football.inertia)/1.5, table.height/230);
+        if(game.homeTurn){
+            football.velocity.y = -250;
+        }
+        else{
+            football.velocity.y = 250;
+        }
+        football.velocity.x = 0;
+        football.angularVelocity/=2;
     }
 }
 //Check if the mouse hit any of the sides of the football
@@ -354,7 +389,7 @@ function calculateCollision(intersectionPoints, mouseEnd){
 }
 //Check if football is in play
 function checkInPlay(){
-    return football.vertex1.y >= table.y && football.vertex2.y >= table.y && football.vertex3.y >= table.y && football.vertex1.y <= table.y + table.height && football.vertex2.y <= table.y + table.height && football.vertex3.y <= table.y + table.height && football.center.x > game.x && football.center.x < game.x+game.width;
+    return football.vertex1.y >= table.y && football.vertex2.y >= table.y && football.vertex3.y >= table.y && football.vertex1.y <= table.y + table.height && football.vertex2.y <= table.y + table.height && football.vertex3.y <= table.y + table.height && football.center.x > table.x && football.center.x < table.x+table.width;
 }
 //Check if the football is off the edge of the table for a touchdown (team is 0 when its the home team (player on the bottom) that just hit)
 function checkTouchdown(team){
@@ -778,7 +813,6 @@ function draw(timeStamp){
         ctx.fillText(game.homeOffs, startX+7*cellWidth/2, startY+cellHeight);
         ctx.fillText(game.awayOffs, startX+7*cellWidth/2, startY+2*cellHeight);
     }
-
     window.requestAnimationFrame(draw);
 }
 //Next tick
