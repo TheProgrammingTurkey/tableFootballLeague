@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="standings.css">
+    <script src="standings.js" defer></script>
+    <title>Hockey Havoc</title>
+    <link rel="icon" type="image/x-icon" href="football.png">
+</head>
+<body onload="displayStandings(), displayWeekSchedule(), displayUserSchedule()">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <h1><a href="index.html">Hockey Havoc</a></h1>
+    <div class="standingsAndSchedule">
+        <!-- Standings Table -->
+        <div class = "standings">
+            <h2>Standings</h2>
+            <table id ="standings">
+            </table>
+        </div>
+        <div class = "schedules">
+            <!-- Schedule for the week -->
+            <div>
+                <h2 id="weekScheduleHeader"></h2>
+                <table id ="weekScheduleTable">
+                </table>
+            </div>
+            <!-- Schedule for the whole season -->
+            <div>
+                <h2 id="userScheduleHeader"></h2>
+                <table style="font-size: 1vw;" id ="userScheduleTable">
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- Go to the next game -->
+    <div class="nextGame">
+        <h3 class="inNextGame" id="nextOpponent">Next Game is Against &ltOpponent Name&gt</h3>
+        <h3 class="inNextGame" id="linkNext" style="font-size: 40px; cursor: pointer;" onclick="goToGame()">&#x25B6</h3>
+    </div>    
+</body>
+</html>

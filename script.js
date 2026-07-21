@@ -17,7 +17,9 @@ let game = {
     homeOffs: 0,
     awayOffs: 0,
     homeTurn: true,
-    playing: false
+    playing: true,
+    homeTeam: "",
+    awayTeam: ""
 };
 //Set up the table
 const table = {
@@ -63,6 +65,36 @@ const power = 2; //Higher number means more power
 let kickTime = 0; //How long the ball has been in the air during a kickoff
 let kickLength = 0; // How long the ball should be in the air during a kickoff
 
+
+//If the user picked Quick Play, figure out what team is the home team and what team is the away team
+if(localStorage.getItem("gameType") == "quickPlay"){
+    let teams = JSON.parse(localStorage.getItem("standings"));
+    game.homeTeam = JSON.parse(localStorage.getItem("userTeam"));
+    teams.every(team => {
+        if(game.homeTeam[0][0] == team[0]){
+            teams.splice(teams.indexOf(team),1);
+            game.homeTeam = [,team[1]];
+            return false;
+        }
+        return true;
+    });
+    game.awayTeam = teams[Math.floor(Math.random()*teams.length)];
+}//If the user picked Season, use the schedule to find the away team
+else{
+    currentWeek = parseInt(localStorage.getItem("currentWeek"));
+    thisWeek = JSON.parse(localStorage.getItem("schedule"))[currentWeek];
+    thisWeek.forEach(curGame =>{
+        if(curGame.homeTeam[0] == JSON.parse(localStorage.getItem("userTeam"))[0]){
+            game.awayTeam = curGame.awayTeam;
+            game.homeTeam = curGame.homeTeam;
+        }
+        else if(curGame.awayTeam[0] == JSON.parse(localStorage.getItem("userTeam"))[0]){
+            game.homeTeam = curGame.awayTeam;
+            game.awayTeam = curGame.homeTeam;
+        }
+    });
+    let standings = JSON.parse(localStorage.getItem("standings"));
+}
 
 //when key is pressed down, log the key
 document.addEventListener("keydown", event => {
@@ -146,7 +178,7 @@ function updatePlaying(){
             game.playing = false;
             reset();
         }//Check for a safety for the away team (top player)
-        else if(checkTouchdown(0) || (checkOff(0) && !game.homeTurn)){
+        else if(checkTouchdown(0) || (checkOff(0) && !game.homeTurn && !checkOff(1))){
             game.homeScore+=2;
             game.homeOffs = 0;
             game.awayOffs = 0;
@@ -167,7 +199,7 @@ function updatePlaying(){
             game.playing = false;
             reset();
         }//Check for a safety for the home team (bottom player)
-        else if(checkTouchdown(1) || (checkOff(1) && game.homeTurn)){
+        else if(checkTouchdown(1) || (checkOff(1) && game.homeTurn && !checkOff(0))){
             game.awayScore+=2;
             game.homeOffs = 0;
             game.awayOffs = 0;
@@ -179,6 +211,32 @@ function updatePlaying(){
         }
         if(checkInPlay()){
             switchTurn();
+        }
+        if(game.homeScore >= 30 || game.awayScore >= 30){
+            if(localStorage.getItem("gameType") == "season"){
+                let standings = JSON.parse(localStorage.getItem("standings"));
+                let tempHome;
+                let tempAway;
+                standings.forEach(team => {
+                    if(team[0] == game.homeTeam[0]){
+                        tempHome = standings.indexOf(team);
+                    }
+                    else if(team[0] == game.awayTeam[0]){
+                        tempAway = standings.indexOf(team);
+                    }
+                });
+                if(game.homeScore > game.awayScore){
+                    localStorage.setItem("result", JSON.stringify([tempHome, 0, game.homeScore, tempAway, 1, game.awayScore]));
+                }
+                else{
+                    localStorage.setItem("result", JSON.stringify([tempHome, 1, game.homeScore, tempAway, 0, game.awayScore]));
+                }
+                localStorage.setItem("currentWeek", currentWeek+1);
+                document.location.href = "standings.html";
+            }
+            else{
+                document.location.href = "index.html";
+            }
         }
     }
 }
@@ -253,7 +311,7 @@ function reset(){
     kickLength = 0;
     kickTime = 0;
     football.angle3D = 0;
-    football.fieldGoal = false;
+    football.fieldGoalScored = false;
 }
 //Handle the collision between the mouse and the football
 function calculateCollision(intersectionPoints, mouseEnd){
@@ -273,7 +331,7 @@ function calculateCollision(intersectionPoints, mouseEnd){
     //Apply the impulse to the football's velocity
     football.velocity.x = (impulse/football.mass)*Math.cos(angle2D)/Math.max(1, Math.abs(spinAmt)/10);
     football.velocity.y = (impulse/football.mass)*Math.sin(angle2D)/Math.max(1, Math.abs(spinAmt)/10);
-    football.angularVelocity = (impulse/football.mass)*spinAmt/football.inertia;
+    football.angularVelocity = Math.min(35, Math.abs((impulse/football.mass)*spinAmt/football.inertia))*Math.sign((impulse/football.mass)*spinAmt/football.inertia);
     football.stopped = false;
     mouse.history = [];
     if(!game.playing){       
@@ -283,7 +341,7 @@ function calculateCollision(intersectionPoints, mouseEnd){
         kickTime = 0;
     }
     else if(football.kickoff){
-        kickLength = Math.min(Math.abs(football.velocity.y/football.inertia), 2.5);
+        kickLength = Math.min(Math.abs(football.velocity.y/football.inertia), table.height/230);
         if(game.homeTurn){
             football.velocity.y = -250;
         }
@@ -296,7 +354,7 @@ function calculateCollision(intersectionPoints, mouseEnd){
 }
 //Check if football is in play
 function checkInPlay(){
-    return football.vertex1.y >= table.y && football.vertex2.y >= table.y && football.vertex3.y >= table.y && football.vertex1.y <= table.y + table.height && football.vertex2.y <= table.y + table.height && football.vertex3.y <= table.y + table.height;
+    return football.vertex1.y >= table.y && football.vertex2.y >= table.y && football.vertex3.y >= table.y && football.vertex1.y <= table.y + table.height && football.vertex2.y <= table.y + table.height && football.vertex3.y <= table.y + table.height && football.center.x > game.x && football.center.x < game.x+game.width;
 }
 //Check if the football is off the edge of the table for a touchdown (team is 0 when its the home team (player on the bottom) that just hit)
 function checkTouchdown(team){
@@ -305,8 +363,8 @@ function checkTouchdown(team){
 }
 //Check if the football has fallen off the table (team is 0 when its the home team (player on the bottom) that just hit)
 function checkOff(team){
-    if(team == 0) return football.center.y < table.y;
-    return football.center.y > table.y + table.height;
+    if(team == 0) return football.center.y < table.y || football.center.x < table.x || football.center.x > table.x+table.width;
+    return football.center.y > table.y + table.height || football.center.x < table.x || football.center.x > table.x+table.width;
 }
 //Switch whos turn it is
 function switchTurn(){
@@ -577,11 +635,6 @@ function draw(timeStamp){
         ctx.font = "bold 32px Arial";
         ctx.textBaseline = 'bottom';
         ctx.textAlign = 'center';
-
-        let data = [
-            ["Home", game.homeScore, game.homeOffs], 
-            ["Away", game.awayScore, game.awayOffs],
-        ];
         
         const cellWidth = 75;
         const cellHeight = 40;
@@ -597,8 +650,8 @@ function draw(timeStamp){
         ctx.moveTo(startX+3*cellWidth, startY);
         ctx.lineTo(startX+3*cellWidth, startY+2*cellHeight);
         ctx.stroke();
-        ctx.fillText("Home", startX+cellWidth, startY+cellHeight);
-        ctx.fillText("Away", startX+cellWidth, startY+2*cellHeight);
+        ctx.fillText(game.homeTeam[3], startX+cellWidth, startY+cellHeight);
+        ctx.fillText(game.awayTeam[3], startX+cellWidth, startY+2*cellHeight);
         ctx.fillText(game.homeScore, startX+5*cellWidth/2, startY+cellHeight);
         ctx.fillText(game.awayScore, startX+5*cellWidth/2, startY+2*cellHeight);
         ctx.fillText(game.homeOffs, startX+7*cellWidth/2, startY+cellHeight);
@@ -696,6 +749,34 @@ function draw(timeStamp){
             ctx.strokeStyle = "Yellow"
             ctx.stroke()
         }
+        //Drawing the scoreboard
+        ctx.fillStyle = "black";
+        ctx.strokeStyle = "black"
+        ctx.font = "bold 32px Arial";
+        ctx.textBaseline = 'bottom';
+        ctx.textAlign = 'center';
+        ctx.lineWidth = 1;
+        
+        const cellWidth = 75;
+        const cellHeight = 40;
+        const startX = table.x
+        const startY = table.y-10-cellHeight*2;
+
+        ctx.strokeRect(startX, startY, 4*cellWidth, cellHeight*2);
+        ctx.beginPath();
+        ctx.moveTo(startX, startY+cellHeight);
+        ctx.lineTo(startX+4*cellWidth, startY+cellHeight);
+        ctx.moveTo(startX+2*cellWidth, startY);
+        ctx.lineTo(startX+2*cellWidth, startY+2*cellHeight);
+        ctx.moveTo(startX+3*cellWidth, startY);
+        ctx.lineTo(startX+3*cellWidth, startY+2*cellHeight);
+        ctx.stroke();
+        ctx.fillText(game.homeTeam[3], startX+cellWidth, startY+cellHeight);
+        ctx.fillText(game.awayTeam[3], startX+cellWidth, startY+2*cellHeight);
+        ctx.fillText(game.homeScore, startX+5*cellWidth/2, startY+cellHeight);
+        ctx.fillText(game.awayScore, startX+5*cellWidth/2, startY+2*cellHeight);
+        ctx.fillText(game.homeOffs, startX+7*cellWidth/2, startY+cellHeight);
+        ctx.fillText(game.awayOffs, startX+7*cellWidth/2, startY+2*cellHeight);
     }
 
     window.requestAnimationFrame(draw);

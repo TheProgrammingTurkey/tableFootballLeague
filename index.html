@@ -2,15 +2,62 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Table Football</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="Vec2.js"></script>
+    <link rel="stylesheet" href="homeScreen.css">
+    <script src="standings.js" defer></script>
+    <link rel="icon" type="image/x-icon" href="football.png">
+    <title>Table Football League</title>
 </head>
 <body>
-    <canvas id = "game">
-    </canvas>
-    <script src="script.js"></script>
+    <h1>Table Football League</h1>
+    <div id="gamemodeSelect">
+        <button onclick="pickSeasonTeam()">Season</button>
+        <button onclick="pickQuickPlayTeam()">Quick Play</button>
+    </div>
+    <!-- Displays when user clicks the Season button -->
+    <!-- Allows the user to pick their team and start the game -->
+    <div class="teamSelect" id="seasonTeamSelect">
+        <h2>Team Select</h2>
+        <div class="teamScroll">
+            <h3 onclick="scrollLeftTeams()" style="font-size: 40px; cursor: pointer;">&#x25C0; &thinsp;</h3>
+            <img></img>
+            <h3 id="seasonTeamNameSelect"></h3>
+            <h3 onclick="scrollRightTeams()" style="font-size: 40px; cursor: pointer;">&thinsp; &#x25B6;</h3>
+        </div>
+        <a href="standings.html">Select Team</a>
+    </div>
+    <!-- Displays when user clicks the Quick Play button -->
+    <!-- Allows the user to pick their team and start the game -->
+    <div class="teamSelect" id="quickPlayTeamSelect">
+        <h2>Team Select</h2>
+        <div class="teamScroll">
+            <h3 onclick="scrollLeftTeams()" style="font-size: 40px; cursor: pointer;">&#x25C0; &thinsp;</h3>
+            <img></img>
+            <h3 id="QPTeamNameSelect"></h3>
+            <h3 onclick="scrollRightTeams()" style="font-size: 40px; cursor: pointer;">&thinsp; &#x25B6;</h3>
+        </div>
+        <a href="game.html">Select Team</a>
+    </div>
+    <p id="information">V 1.0.0</p>
+    <!-- Instructions/Controls Popup-->
+    <button onclick="showInstructions()" id="showInstructionsButton">Instructions</button>
+    <div id="instructions" class="popup">
+        <button id = "x" onclick = "hideInstructions()">X</button>
+        <h2>Controls</h2>
+        <p>With the mouse, touchpad, or touchscreen, swipe across the football to hit it.</p>
+        <h2>Instructions</h2>
+        <p>Every game starts with a kickoff. Swipe up or down on the football towards your opponents end.</p>
+        <p>For every hit, your goal is to hit the football so that it is partially hanging off your opponents end of the table (A Touchdown).</p>
+        <p>If the ball happens to slide off the table entirely, that is called an "Off" (The second number on the scoreboard).</p>
+        <p>If one team gets three offs before either team scores, the opposing team gets a field goal.</p>
+        <p>For field goals, your goal is to hit the ball through the uprights.</p>
+        <p>The game is first to 30 points.</p>
+        <h2>Scoring</h2>
+        <p>Touchdown (6): Hit the football so that it is partially hanging off your opponents end of the table</p>
+        <p>Extra Point (1): Hit the football through the uprights after the touchdown</p>
+        <p>Two Point Conversion (2): Hit the football so that it is partially hanging off your opponents end of the table after the touchdown</p>
+        <p>Field Goal (3): Hit the football through the uprights after 3 Offs from the opponent</p>
+        <p>Safety (2*): Hit the football partially off, or entirely off of your own side (* 2 points for the opponent)</p>
+    </div>
 </body>
 </html>
