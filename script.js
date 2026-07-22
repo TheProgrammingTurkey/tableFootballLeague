@@ -17,7 +17,7 @@ let game = {
     homeOffs: 0,
     awayOffs: 0,
     homeTurn: true,
-    playing: true,
+    playing: true, //game.playing is true when players are hitting back and forth too each other (not kicking off or kicking)
     homeTeam: "",
     awayTeam: ""
 };
@@ -38,8 +38,8 @@ let football = {
     mass: 1,
     velocity: new Vec2(0, 0),
     angularVelocity: 0,
-    angle2D: 5*Math.PI/4,
-    angle3D: 0,
+    angle2D: 5*Math.PI/4, //For spinning along the axis going into the screen
+    angle3D: 0, //For spinning along one of the axis going along the screen
     stopped: true,
     inertia: 500,
     kickoff: true,
@@ -70,6 +70,7 @@ let kickLength = 0; // How long the ball should be in the air during a kickoff
 if(localStorage.getItem("gameType") == "quickPlay"){
     let teams = JSON.parse(localStorage.getItem("standings"));
     game.homeTeam = JSON.parse(localStorage.getItem("userTeam"));
+    //Make sure its not a team playing against themselves
     teams.every(team => {
         if(game.homeTeam[0] == team[0]){
             console.log(game.homeTeam[0], team[0])
@@ -120,10 +121,7 @@ document.addEventListener("pointermove", function(event) {
     });
 
     // Keep only the last 50 ms
-    while (
-        mouse.history.length > 1 &&
-        now - mouse.history[0].t > 50
-    ) {
+    while (mouse.history.length > 1 && now - mouse.history[0].t > 50){
         mouse.history.shift();
     }
 
@@ -149,9 +147,9 @@ function updatePlaying(){
     calculateVertices();
     //Friction
     if(!football.kickoff){
-        const frictionFactor = Math.pow(friction, secondsPassed * 60); // Normalize to 60fps
+        const frictionFactor = Math.pow(friction, secondsPassed*60);
         football.velocity = football.velocity.product(frictionFactor);
-        football.angularVelocity *= frictionFactor;
+        football.angularVelocity*=frictionFactor;
     }
     //Round the velocity
     football.velocity.x = Math.round(football.velocity.x*1000)/1000;
@@ -216,7 +214,7 @@ function updatePlaying(){
         if(game.homeOffs == 3 || game.awayOffs == 3){
             game.playing = false;
             reset();
-        }
+        }//End the game if one team gets to 30
         if(game.homeScore >= 30 || game.awayScore >= 30){
             if(localStorage.getItem("gameType") == "season"){
                 let standings = JSON.parse(localStorage.getItem("standings"));
@@ -229,10 +227,10 @@ function updatePlaying(){
                     else if(team[0] == game.awayTeam[0]){
                         tempAway = standings.indexOf(team);
                     }
-                });
+                });//Home Team (bottom / user) won
                 if(game.homeScore > game.awayScore){
                     localStorage.setItem("result", JSON.stringify([tempHome, 0, 30, tempAway, 1, game.awayScore]));
-                }
+                }//Away Team (top / ai) won
                 else{
                     localStorage.setItem("result", JSON.stringify([tempHome, 1, game.homeScore, tempAway, 0, 30]));
                 }
@@ -259,10 +257,11 @@ function updateKicking(){
     //Calculate the vertices of the football
     calculateVertices();
     if(!football.stopped){
-        football.sideLengths[0]=Math.max(football.sideLengths[0]-20*secondsPassed, 20);
-        football.velocity.x*=61*secondsPassed;
-        football.velocity.y+=250*secondsPassed;
+        football.sideLengths[0]=Math.max(football.sideLengths[0]-20*secondsPassed, 20); //Make the ball get smaller (because its getting farther away)
+        football.velocity.x*=61*secondsPassed; //Make the side to side speed of the ball increase (the slice)
+        football.velocity.y+=250*secondsPassed; //Gravity
         kickTime+=secondsPassed;
+        //If the ball goes through the uprights
         if(!football.fieldGoalScored && kickTime > 2.5 && football.center.x > goal.vertex1.x && football.center.x < goal.vertex2.x && football.center.y < goal.vertex2.y){
             if(game.homeTurn){
                 if(game.awayOffs == 3){
@@ -283,6 +282,7 @@ function updateKicking(){
             football.fieldGoalScored = true
         }
     }
+    //The ball missed
     if(kickTime > 5){
         game.playing = true;
         reset();
@@ -293,16 +293,19 @@ function updateKicking(){
 //Let the Ai decide how hard to hit the ball
 function aiMove(){
     //football.velocity.y = (table.y+table.height-football.center.y)*3 --- perfect power
-    const aiPowerError = Math.random()*2
-    football.velocity.y = (table.y+table.height-football.center.y)*(1.5+aiPowerError)
+    //Generating error for the AI
+    const aiPowerError = Math.random()*2;
+    football.velocity.y = (table.y+table.height-football.center.y)*(1.5+aiPowerError);
     football.angularVelocity = Math.random()*35;
     football.stopped = false;
+    //Kickoffs
     if(!game.playing){       
         football.velocity.y = (goal.vertex2.y-football.center.y)*(2-Math.random()/3)
         football.velocity.x = 60*(Math.random()-.5);
         football.angularVelocity = football.velocity.y;
         kickTime = 0;
     }
+    //Field goal kicks
     else if(football.kickoff){
         kickLength = Math.min(Math.abs(football.velocity.y/football.inertia)/1.5, table.height/230);
         if(game.homeTurn){
@@ -324,6 +327,7 @@ function checkBallHit(mouseEnd){
 }
 //Reset for kickoff (top refers to if the current player is on the top)
 function reset(){
+    //If resetting to a kickoff
     if(game.playing){
         if(game.homeTurn){
             football.center = new Vec2(canvas.width/2, canvas.height-table.y);
@@ -333,7 +337,7 @@ function reset(){
             football.center = new Vec2(canvas.width/2, table.y);
             game.homeTurn = false;
         }
-    }
+    }//Reset for a field goal kick
     else{
         football.center = new Vec2(canvas.width/2, canvas.height-table.y);
     }
@@ -355,7 +359,6 @@ function calculateCollision(intersectionPoints, mouseEnd){
     const spinAmt = distancePointToInfiniteLine(football.center, mouseStart, mouseEnd);
     //Find the angle2D of the mouse movement
     const angle2D = Math.atan2(mouseEnd.y - mouseStart.y, mouseEnd.x - mouseStart.x);
-    //Calculate the force of the mouse onto the football
     const first = mouse.history[0];
     const last = mouse.history[mouse.history.length - 1];
     const mouseSpeed = Math.hypot(last.x - first.x, last.y - first.y) / ((last.t - first.t) / 1000);
@@ -369,12 +372,13 @@ function calculateCollision(intersectionPoints, mouseEnd){
     football.angularVelocity = Math.min(35, Math.abs((impulse/football.mass)*spinAmt/football.inertia))*Math.sign((impulse/football.mass)*spinAmt/football.inertia);
     football.stopped = false;
     mouse.history = [];
+    //Convert the impulse to field goal kick power
     if(!game.playing){       
         football.velocity.x/=5;
         football.velocity.y = Math.max(Math.min(football.velocity.y/2, -200), -500);
         football.angularVelocity = football.velocity.y;
         kickTime = 0;
-    }
+    }//Convert the impulse to kickoff power
     else if(football.kickoff){
         kickLength = Math.min(Math.abs(football.velocity.y/football.inertia), table.height/230);
         if(game.homeTurn){
@@ -416,7 +420,7 @@ function calculateVertices(){
     let vertex1 = {x: -football.sideLengths[0]/3, y: football.sideLengths[0]/3};
     let vertex2 = {x: -football.sideLengths[0]/3, y: -2*football.sideLengths[0]/3};
     let vertex3 = {x: 2*football.sideLengths[0]/3, y: football.sideLengths[0]/3};
-
+    //The laces
     let designVertices = [
         {x: -football.sideLengths[0]/4, y: -football.sideLengths[0]/4},
         {x: football.sideLengths[0]/4, y: football.sideLengths[0]/4},

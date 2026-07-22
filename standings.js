@@ -20,6 +20,7 @@ document.addEventListener('keydown', function(event) {
 //Setup the Standings
 let stats;
 if (localStorage.getItem("standings") === null){
+    //Create an 8x2 array of 0's
     stats = Array(8).fill().map(() => Array(2).fill(0));
 }
 else{
@@ -27,6 +28,7 @@ else{
     stats.forEach(team => {
         team.shift();
     });
+    //Log the most recent scores
     if(localStorage.getItem("result") !== null){
         let result = JSON.parse(localStorage.getItem("result"));
         stats[result[0]][result[1]]++;
@@ -74,6 +76,7 @@ else{
     //Calculate what happened in the previous week of games
     if(localStorage.getItem("result") !== null){
         schedule[currentWeek-1].forEach(game => {
+            //If it was a AI vs AI game, randomize who won but take into account team skill
             if(game.awayTeam[0] != userTeam[0] && game.homeTeam[0] != userTeam[0]){
                 let homeCPU;
                 let awayCPU;
@@ -126,12 +129,16 @@ let userScheduleNumRows = 7;
 function generateMatchSchedule(teams) {
     // Generate the match schedule
     let matchSchedule = [];
+    //Play each time 4 times
     for(let i = 0; i < 4; i++){
         // Shuffle the teams array to randomize the matches
         const shuffledTeams = shuffleArray(teams);
+        //Play every other team in this round
         for (let j = 0; j < shuffledTeams.length - 1; j++) {
             const roundMatches = [];
+            //Create the mathces
             for (let k = 0; k < shuffledTeams.length / 2; k++) {
+                //Figure out home and away
                 if(j%2 == 0){
                     const match = {
                         homeTeam: shuffledTeams[k],
@@ -171,6 +178,7 @@ function displayWeekSchedule(){
     //If the season is over
     if(currentWeek >= 28){
         let sortedAllStats = allStats.slice();
+        //Sort the teams based on points
         sortedAllStats.sort((a, b) => {
             if (a[1] === b[1]) {
                 return a[0].localeCompare(b[0]);
@@ -230,8 +238,10 @@ function displayWeekSchedule(){
 }
 function displayUserSchedule(){
     userScheduleHeader.innerHTML = `${userTeam[0]} Schedule`;
+    //For the amount of rows on the desired schedule
     for(let i = 0; i < userScheduleNumRows; i++){
         let row = document.createElement("tr");
+        //Cells in each row
         for(let j = 0; j < Math.ceil(schedule.length/userScheduleNumRows); j++){
             //Each Game
             if(i*Math.ceil(schedule.length/userScheduleNumRows)+j < schedule.length){
@@ -243,7 +253,9 @@ function displayUserSchedule(){
                 else{
                     game = document.createElement("td");
                 }
+                //Check through each game that week for your team
                 for(let k = 0; k < allStats.length/2; k++){
+                    //You were the home team
                     if(schedule[i*Math.ceil(schedule.length/userScheduleNumRows) + j][k].homeTeam[0] == userTeam[0]){
                         //Game hasn't happened
                         if(schedule[i*Math.ceil(schedule.length/userScheduleNumRows) + j][k].homeScore == "No Score"){
@@ -253,7 +265,7 @@ function displayUserSchedule(){
                         else{
                             game.innerHTML = schedule[i*Math.ceil(schedule.length/userScheduleNumRows) + j][k].homeTeam[3] + " " + schedule[i*Math.ceil(schedule.length/userScheduleNumRows) + j][k].homeScore + "-" + schedule[i*Math.ceil(schedule.length/userScheduleNumRows) + j][k].awayScore + " " + schedule[i*Math.ceil(schedule.length/userScheduleNumRows) + j][k].awayTeam[3];
                         } 
-                    }
+                    }//You were the away team
                     else if(schedule[i*Math.ceil(schedule.length/userScheduleNumRows) + j][k].awayTeam[0] == userTeam[0]){
                         //Game hasn't happened
                         if(schedule[i*Math.ceil(schedule.length/userScheduleNumRows) + j][k].homeScore == "No Score"){
@@ -272,7 +284,7 @@ function displayUserSchedule(){
     }
 }
 function displayStandings(){
-    //Sort the standings
+    //Sort the standings by points and then alphabetical
     let sortedAllStats = allStats.slice();
     sortedAllStats.sort((a, b) => {
         if (a[1] === b[1]) {
