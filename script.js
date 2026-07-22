@@ -71,9 +71,9 @@ if(localStorage.getItem("gameType") == "quickPlay"){
     let teams = JSON.parse(localStorage.getItem("standings"));
     game.homeTeam = JSON.parse(localStorage.getItem("userTeam"));
     teams.every(team => {
-        if(game.homeTeam[0][0] == team[0]){
+        if(game.homeTeam[0] == team[0]){
+            console.log(game.homeTeam[0], team[0])
             teams.splice(teams.indexOf(team),1);
-            game.homeTeam = [,team[1]];
             return false;
         }
         return true;
@@ -231,10 +231,10 @@ function updatePlaying(){
                     }
                 });
                 if(game.homeScore > game.awayScore){
-                    localStorage.setItem("result", JSON.stringify([tempHome, 0, game.homeScore, tempAway, 1, game.awayScore]));
+                    localStorage.setItem("result", JSON.stringify([tempHome, 0, 30, tempAway, 1, game.awayScore]));
                 }
                 else{
-                    localStorage.setItem("result", JSON.stringify([tempHome, 1, game.homeScore, tempAway, 0, game.awayScore]));
+                    localStorage.setItem("result", JSON.stringify([tempHome, 1, game.homeScore, tempAway, 0, 30]));
                 }
                 localStorage.setItem("currentWeek", currentWeek+1);
                 document.location.href = "standings.html";
