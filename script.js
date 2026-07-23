@@ -232,38 +232,38 @@ function updatePlaying(){
         if(game.homeOffs == 3 || game.awayOffs == 3){
             game.playing = false;
             reset();
-        }//End the game if one team gets to 30
-        if(game.homeScore >=30 || game.awayScore >= 30){
-            if(localStorage.getItem("gameTypeF") == "season"){
-                let standings;
-                if(inEast){
-                    standings = JSON.parse(localStorage.getItem("eastStandingsF"));
-                }
-                else{
-                    standings = JSON.parse(localStorage.getItem("westStandingsF"));
-                }
-                let tempHome;
-                let tempAway;
-                standings.forEach(team => {
-                    if(team[0] == game.homeTeam[0]){
-                        tempHome = standings.indexOf(team);
-                    }
-                    else if(team[0] == game.awayTeam[0]){
-                        tempAway = standings.indexOf(team);
-                    }
-                });//Home Team (bottom / user) won
-                if(game.homeScore > game.awayScore){
-                    localStorage.setItem("resultF", JSON.stringify([tempHome, 0, 30, tempAway, 1, game.awayScore]));
-                }//Away Team (top / ai) won
-                else{
-                    localStorage.setItem("resultF", JSON.stringify([tempHome, 1, game.homeScore, tempAway, 0, 30]));
-                }
-                localStorage.setItem("currentWeekF", currentWeek+1);
-                document.location.href = "standings.html";
+        }
+    }//End the game if one team gets to 30
+    if(game.homeScore >=30 || game.awayScore >= 30){
+        if(localStorage.getItem("gameTypeF") == "season"){
+            let standings;
+            if(inEast){
+                standings = JSON.parse(localStorage.getItem("eastStandingsF"));
             }
             else{
-                document.location.href = "index.html";
+                standings = JSON.parse(localStorage.getItem("westStandingsF"));
             }
+            let tempHome;
+            let tempAway;
+            standings.forEach(team => {
+                if(team[0] == game.homeTeam[0]){
+                    tempHome = standings.indexOf(team);
+                }
+                else if(team[0] == game.awayTeam[0]){
+                    tempAway = standings.indexOf(team);
+                }
+            });//Home Team (bottom / user) won
+            if(game.homeScore > game.awayScore){
+                localStorage.setItem("resultF", JSON.stringify([tempHome, 0, 30, tempAway, 1, game.awayScore]));
+            }//Away Team (top / ai) won
+            else{
+                localStorage.setItem("resultF", JSON.stringify([tempHome, 1, game.homeScore, tempAway, 0, 30]));
+            }
+            localStorage.setItem("currentWeekF", currentWeek+1);
+            document.location.href = "standings.html";
+        }
+        else{
+            document.location.href = "index.html";
         }
     }
 }
