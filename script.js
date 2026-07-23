@@ -67,13 +67,12 @@ let kickLength = 0; // How long the ball should be in the air during a kickoff
 
 
 //If the user picked Quick Play, figure out what team is the home team and what team is the away team
-if(localStorage.getItem("gameType") == "quickPlay"){
-    let teams = JSON.parse(localStorage.getItem("standings"));
-    game.homeTeam = JSON.parse(localStorage.getItem("userTeam"));
+if(localStorage.getItem("gameTypeF") == "quickPlay"){
+    let teams = JSON.parse(localStorage.getItem("standingsF"));
+    game.homeTeam = JSON.parse(localStorage.getItem("userTeamF"));
     //Make sure its not a team playing against themselves
     teams.every(team => {
         if(game.homeTeam[0] == team[0]){
-            console.log(game.homeTeam[0], team[0])
             teams.splice(teams.indexOf(team),1);
             return false;
         }
@@ -82,19 +81,19 @@ if(localStorage.getItem("gameType") == "quickPlay"){
     game.awayTeam = teams[Math.floor(Math.random()*teams.length)];
 }//If the user picked Season, use the schedule to find the away team
 else{
-    currentWeek = parseInt(localStorage.getItem("currentWeek"));
-    thisWeek = JSON.parse(localStorage.getItem("schedule"))[currentWeek];
+    currentWeek = parseInt(localStorage.getItem("currentWeekF"));
+    thisWeek = JSON.parse(localStorage.getItem("scheduleF"))[currentWeek];
     thisWeek.forEach(curGame =>{
-        if(curGame.homeTeam[0] == JSON.parse(localStorage.getItem("userTeam"))[0]){
+        if(curGame.homeTeam[0] == JSON.parse(localStorage.getItem("userTeamF"))[0]){
             game.awayTeam = curGame.awayTeam;
             game.homeTeam = curGame.homeTeam;
         }
-        else if(curGame.awayTeam[0] == JSON.parse(localStorage.getItem("userTeam"))[0]){
+        else if(curGame.awayTeam[0] == JSON.parse(localStorage.getItem("userTeamF"))[0]){
             game.homeTeam = curGame.awayTeam;
             game.awayTeam = curGame.homeTeam;
         }
     });
-    let standings = JSON.parse(localStorage.getItem("standings"));
+    let standings = JSON.parse(localStorage.getItem("standingsF"));
 }
 
 //when key is pressed down, log the key
@@ -216,8 +215,8 @@ function updatePlaying(){
             reset();
         }//End the game if one team gets to 30
         if(game.homeScore >= 30 || game.awayScore >= 30){
-            if(localStorage.getItem("gameType") == "season"){
-                let standings = JSON.parse(localStorage.getItem("standings"));
+            if(localStorage.getItem("gameTypeF") == "season"){
+                let standings = JSON.parse(localStorage.getItem("standingsF"));
                 let tempHome;
                 let tempAway;
                 standings.forEach(team => {
@@ -229,12 +228,12 @@ function updatePlaying(){
                     }
                 });//Home Team (bottom / user) won
                 if(game.homeScore > game.awayScore){
-                    localStorage.setItem("result", JSON.stringify([tempHome, 0, 30, tempAway, 1, game.awayScore]));
+                    localStorage.setItem("resultF", JSON.stringify([tempHome, 0, 30, tempAway, 1, game.awayScore]));
                 }//Away Team (top / ai) won
                 else{
-                    localStorage.setItem("result", JSON.stringify([tempHome, 1, game.homeScore, tempAway, 0, 30]));
+                    localStorage.setItem("resultF", JSON.stringify([tempHome, 1, game.homeScore, tempAway, 0, 30]));
                 }
-                localStorage.setItem("currentWeek", currentWeek+1);
+                localStorage.setItem("currentWeekF", currentWeek+1);
                 document.location.href = "standings.html";
             }
             else{
