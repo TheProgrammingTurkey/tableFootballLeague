@@ -233,8 +233,7 @@ function updatePlaying(){
             game.playing = false;
             reset();
         }//End the game if one team gets to 30
-        if(game.homeScore == 0 || game.awayScore >= 30){
-            game.awayScore = 1;
+        if(game.homeScore >=30 || game.awayScore >= 30){
             if(localStorage.getItem("gameTypeF") == "season"){
                 let standings;
                 if(inEast){
