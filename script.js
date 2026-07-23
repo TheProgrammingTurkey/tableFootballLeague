@@ -318,20 +318,30 @@ function updateKicking(){
 function aiMove(){
     //football.velocity.y = (table.y+table.height-football.center.y)*3 --- perfect power
     //Generating error for the AI
-    const aiPowerError = Math.random()*2;
-    football.velocity.y = (table.y+table.height-football.center.y)*(1.5+aiPowerError);
+    const skill = game.awayTeam[4];
+    let accuracy = Math.pow((skill - 70) / 29, 1.5);
+
+    // Skill controls range size
+    let spread = 2.2 - accuracy * 1.5;
+
+    // 75% of range below 3, 25% above 3
+    let lowRange = spread * 0.8;
+    let highRange = spread * 0.2;
+
+    let distance = 3 + (Math.random() * (lowRange + highRange) - lowRange);
+    football.velocity.y = (table.y+table.height-football.center.y)*(distance);
     football.angularVelocity = Math.random()*35;
     football.stopped = false;
-    //Kickoffs
+    //Field Goal Kicks
     if(!game.playing){       
-        football.velocity.y = (goal.vertex2.y-football.center.y)*(2-Math.random()/3)
+        football.velocity.y = (goal.vertex2.y-football.center.y)*(1.5-Math.random()/3)
         football.velocity.x = 60*(Math.random()-.5);
         football.angularVelocity = football.velocity.y;
         kickTime = 0;
     }
-    //Field goal kicks
+    //Kickoffs
     else if(football.kickoff){
-        kickLength = Math.min(Math.abs(football.velocity.y/football.inertia)/1.5, table.height/230);
+        kickLength = Math.abs(football.velocity.y/football.inertia)/1.5//Math.min(Math.abs(football.velocity.y/football.inertia)/1.5, table.height/230);
         if(game.homeTurn){
             football.velocity.y = -250;
         }
