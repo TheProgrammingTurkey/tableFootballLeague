@@ -1,5 +1,3 @@
-let showingEast = localStorage.getItem("inEastF");
-
 let standingsTable = document.getElementById("standings");
 let weekScheduleTable = document.getElementById("weekScheduleTable");
 let weekScheduleHeader = document.getElementById("weekScheduleHeader");
@@ -18,6 +16,8 @@ document.addEventListener('keydown', function(event) {
         document.getElementById("showInstructionsButton").style.display = "inline";
     }
 });
+
+let showingEast = localStorage.getItem("inEastF");
 
 //Setup the Standings
 let eastStats;
@@ -317,6 +317,12 @@ function displayWeekSchedule(){
             else{
                 game.innerHTML = eastSchedule[currentWeek][i].homeTeam[0] + " Vs. " + eastSchedule[currentWeek][i].awayTeam[0];
             }
+            if(westSchedule[currentWeek][i].homeTeam[0] == userTeam[0]){
+                nextOpponent.innerHTML = "Next Game is Against The " + westSchedule[currentWeek][i].awayTeam[0];
+            }
+            if(westSchedule[currentWeek][i].awayTeam[0] == userTeam[0]){
+                nextOpponent.innerHTML = "Next Game is Against The " + westSchedule[currentWeek][i].homeTeam[0];
+            }
             row.appendChild(game)
             weekScheduleTable.appendChild(row)
         }
@@ -340,6 +346,12 @@ function displayWeekSchedule(){
             }
             else{
                 game.innerHTML = westSchedule[currentWeek][i].homeTeam[0] + " Vs. " + westSchedule[currentWeek][i].awayTeam[0];
+            }
+            if(eastSchedule[currentWeek][i].homeTeam[0] == userTeam[0]){
+                nextOpponent.innerHTML = "Next Game is Against The " + eastSchedule[currentWeek][i].awayTeam[0];
+            }
+            if(eastSchedule[currentWeek][i].awayTeam[0] == userTeam[0]){
+                nextOpponent.innerHTML = "Next Game is Against The " + eaSchedule[currentWeek][i].homeTeam[0];
             }
             row.appendChild(game)
             weekScheduleTable.appendChild(row)
@@ -365,25 +377,58 @@ function displayUserSchedule(){
                 }
                 //Check through each game that week for your team
                 for(let k = 0; k < eastAllStats.length/2; k++){
-                    //You were the home team
-                    if(eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].homeTeam[0] == userTeam[0]){
-                        //Game hasn't happened
-                        if(eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].homeScore == "No Score"){
-                            game.innerHTML = "Game " + (i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j+1) +" vs " + eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].awayTeam[3];
+                    let inEast = false;
+                    eastAllStats.every(team => {
+                        if(userTeam[0] == team[0]){
+                            inEast = true;
+                            return false;
                         }
-                        //Display the score
-                        else{
-                            game.innerHTML = eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].homeTeam[3] + " " + eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].homeScore + "-" + eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].awayScore + " " + eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].awayTeam[3];
-                        } 
-                    }//You were the away team
-                    else if(eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].awayTeam[0] == userTeam[0]){
-                        //Game hasn't happened
-                        if(eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].homeScore == "No Score"){
-                            game.innerHTML = "Game " + (i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j+1) +" @ " + eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].homeTeam[3]; 
+                        return true;
+                    });
+                    if(inEast){
+                        //You were the home team
+                        if(eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].homeTeam[0] == userTeam[0]){
+                            //Game hasn't happened
+                            if(eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].homeScore == "No Score"){
+                                game.innerHTML = "Game " + (i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j+1) +" vs " + eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].awayTeam[3];
+                            }
+                            //Display the score
+                            else{
+                                game.innerHTML = eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].homeTeam[3] + " " + eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].homeScore + "-" + eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].awayScore + " " + eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].awayTeam[3];
+                            } 
+                        }//You were the away team
+                        else if(eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].awayTeam[0] == userTeam[0]){
+                            //Game hasn't happened
+                            if(eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].homeScore == "No Score"){
+                                game.innerHTML = "Game " + (i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j+1) +" @ " + eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].homeTeam[3]; 
+                            }
+                            //Display the score
+                            else{
+                                game.innerHTML = eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].homeTeam[3] + " " + eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].homeScore + "-" + eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].awayScore + " " + eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].awayTeam[3];
+                            }
                         }
-                        //Display the score
-                        else{
-                            game.innerHTML = eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].homeTeam[3] + " " + eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].homeScore + "-" + eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].awayScore + " " + eastSchedule[i*Math.ceil(eastSchedule.length/userScheduleNumRows) + j][k].awayTeam[3];
+                    }
+                    else{
+                        //You were the home team
+                        if(westSchedule[i*Math.ceil(westSchedule.length/userScheduleNumRows) + j][k].homeTeam[0] == userTeam[0]){
+                            //Game hasn't happened
+                            if(westSchedule[i*Math.ceil(westSchedule.length/userScheduleNumRows) + j][k].homeScore == "No Score"){
+                                game.innerHTML = "Game " + (i*Math.ceil(westSchedule.length/userScheduleNumRows) + j+1) +" vs " + westSchedule[i*Math.ceil(westSchedule.length/userScheduleNumRows) + j][k].awayTeam[3];
+                            }
+                            //Display the score
+                            else{
+                                game.innerHTML = westSchedule[i*Math.ceil(westSchedule.length/userScheduleNumRows) + j][k].homeTeam[3] + " " + westSchedule[i*Math.ceil(westSchedule.length/userScheduleNumRows) + j][k].homeScore + "-" + westSchedule[i*Math.ceil(westSchedule.length/userScheduleNumRows) + j][k].awayScore + " " + westSchedule[i*Math.ceil(westSchedule.length/userScheduleNumRows) + j][k].awayTeam[3];
+                            } 
+                        }//You were the away team
+                        else if(westSchedule[i*Math.ceil(westSchedule.length/userScheduleNumRows) + j][k].awayTeam[0] == userTeam[0]){
+                            //Game hasn't happened
+                            if(westSchedule[i*Math.ceil(westSchedule.length/userScheduleNumRows) + j][k].homeScore == "No Score"){
+                                game.innerHTML = "Game " + (i*Math.ceil(westSchedule.length/userScheduleNumRows) + j+1) +" @ " + westSchedule[i*Math.ceil(westSchedule.length/userScheduleNumRows) + j][k].homeTeam[3]; 
+                            }
+                            //Display the score
+                            else{
+                                game.innerHTML = westSchedule[i*Math.ceil(westSchedule.length/userScheduleNumRows) + j][k].homeTeam[3] + " " + westSchedule[i*Math.ceil(westSchedule.length/userScheduleNumRows) + j][k].homeScore + "-" + westSchedule[i*Math.ceil(westSchedule.length/userScheduleNumRows) + j][k].awayScore + " " + westSchedule[i*Math.ceil(westSchedule.length/userScheduleNumRows) + j][k].awayTeam[3];
+                            }
                         }
                     }
                 }
@@ -435,6 +480,12 @@ function displayStandings(){
         }
         standingsTable.appendChild(row);
     }
+    if(showingEast){
+        document.getElementById("switchConferences").innerHTML = "Show Western Conference";
+    }
+    else{
+        document.getElementById("switchConferences").innerHTML = "Show Eastern Conference";
+    }
 }
 function pickSeasonTeam(){
     //If the season hasn't started yet --> pick your team
@@ -467,11 +518,13 @@ function scrollRightTeams(){
     }
     selectTeamName.innerHTML = leagueAllStats[index][0];
     userTeam = leagueAllStats[index];
-    inEast = false;
+    let inEast = false;
     eastAllStats.every(team => {
         if(userTeam[0] == team[0]){
             inEast = true;
+            return false;
         }
+        return true;
     });
     if(inEast){
         localStorage.setItem("inEastF", true);
@@ -488,11 +541,13 @@ function scrollLeftTeams(){
     }
     selectTeamName.innerHTML = leagueAllStats[index][0];
     userTeam = leagueAllStats[index];
-    inEast = false;
+    let inEast = false;
     eastAllStats.every(team => {
         if(userTeam[0] == team[0]){
             inEast = true;
+            return false;
         }
+        return true;
     });
     if(inEast){
         localStorage.setItem("inEastF", true);
@@ -503,10 +558,24 @@ function scrollLeftTeams(){
     localStorage.setItem("userTeam", JSON.stringify(leagueAllStats[index]));
 }
 function goToGame(){
+    let inEast = false;
+    eastAllStats.every(team => {
+        if(userTeam[0] == team[0]){
+            inEast = true;
+            return false;
+        }
+        return true;
+    });
+    if(inEast){
+        localStorage.setItem("eastScheduleF", JSON.stringify(eastSchedule));
+        localStorage.setItem("eastStandingsF", JSON.stringify(eastAllStats));
+    }
+    else{
+        localStorage.setItem("westScheduleF", JSON.stringify(westSchedule));
+        localStorage.setItem("westStandingsF", JSON.stringify(westAllStats));
+    }
     localStorage.removeItem("resultF");
-    localStorage.setItem("scheduleF", JSON.stringify(schedule));
     localStorage.setItem("currentWeekF", parseInt(currentWeek));
-    localStorage.setItem("standingsF", JSON.stringify(allStats));
     localStorage.setItem("gameTypeF", "season");
     document.location.href = "game.html";
 }
@@ -515,4 +584,18 @@ function showInstructions(){
 }
 function hideInstructions(){
     document.getElementById("instructions").style.display = "none";
+}
+function switchConferences(){
+    if(showingEast){
+        showingEast = false;
+        document.getElementById("switchConferences").innerHTML = "Show Eastern Conference";
+    }
+    else{
+        showingEast = true;
+        document.getElementById("switchConferences").innerHTML = "Show Western Conference";
+    }
+    standingsTable.innerHTML = "";
+    weekScheduleTable.innerHTML = "";
+    displayStandings();
+    displayWeekSchedule();
 }

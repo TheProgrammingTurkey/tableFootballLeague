@@ -68,7 +68,13 @@ let kickLength = 0; // How long the ball should be in the air during a kickoff
 
 //If the user picked Quick Play, figure out what team is the home team and what team is the away team
 if(localStorage.getItem("gameTypeF") == "quickPlay"){
-    let teams = JSON.parse(localStorage.getItem("standingsF"));
+    let teams;
+    if(localStorage.getItem("inEastF") == true){
+        teams = JSON.parse(localStorage.getItem("eastStandingsF"));
+    }
+    else{
+        teams = JSON.parse(localStorage.getItem("westStandingsF"));
+    }
     game.homeTeam = JSON.parse(localStorage.getItem("userTeamF"));
     //Make sure its not a team playing against themselves
     teams.every(team => {
@@ -82,7 +88,12 @@ if(localStorage.getItem("gameTypeF") == "quickPlay"){
 }//If the user picked Season, use the schedule to find the away team
 else{
     currentWeek = parseInt(localStorage.getItem("currentWeekF"));
-    thisWeek = JSON.parse(localStorage.getItem("scheduleF"))[currentWeek];
+    if(localStorage.getItem("inEastF") == true){
+        thisWeek = JSON.parse(localStorage.getItem("eastScheduleF"))[currentWeek];
+    }
+    else{
+        thisWeek = JSON.parse(localStorage.getItem("westScheduleF"))[currentWeek];
+    }
     thisWeek.forEach(curGame =>{
         if(curGame.homeTeam[0] == JSON.parse(localStorage.getItem("userTeamF"))[0]){
             game.awayTeam = curGame.awayTeam;
@@ -93,7 +104,14 @@ else{
             game.awayTeam = curGame.homeTeam;
         }
     });
-    let standings = JSON.parse(localStorage.getItem("standingsF"));
+    console.log(game.homeTeam)
+    let standings;
+    if(localStorage.getItem("inEastF") == true){
+        standings = JSON.parse(localStorage.getItem("eastStandingsF"));
+    }
+    else{
+        standings = JSON.parse(localStorage.getItem("westStandingsF"));
+    }
 }
 
 //when key is pressed down, log the key
@@ -216,7 +234,13 @@ function updatePlaying(){
         }//End the game if one team gets to 30
         if(game.homeScore >= 30 || game.awayScore >= 30){
             if(localStorage.getItem("gameTypeF") == "season"){
-                let standings = JSON.parse(localStorage.getItem("standingsF"));
+                let standings;
+                if(localStorage.getItem("inEastF") == true){
+                    standings = JSON.parse(localStorage.getItem("eastStandingsF"));
+                }
+                else{
+                    standings = JSON.parse(localStorage.getItem("westStandingsF"));
+                }
                 let tempHome;
                 let tempAway;
                 standings.forEach(team => {
