@@ -17,7 +17,7 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-let showingEast = localStorage.getItem("inEastF");
+let showingEast = JSON.parse(localStorage.getItem("inEastF"));
 
 //Setup the Standings
 let eastStats;
@@ -39,14 +39,14 @@ else{
     //Log the most recent scores
     if(localStorage.getItem("resultF") !== null){
         let result = JSON.parse(localStorage.getItem("resultF"));
-        let teams = JSON.parse(localStorage.getItem("eastStandingsF"));
-        let inEast = false;
-        teams.every(team => {
-            if(result[0][0] == team[0]){
-                inEast = true;
-            }
-        });
-        if(inEast){
+        let teams;
+        if(JSON.parse(localStorage.getItem("inEastF"))){
+            teams = JSON.parse(localStorage.getItem("eastStandingsF"));
+        }
+        else{
+            teams = JSON.parse(localStorage.getItem("westStandingsF"));
+        }
+        if(JSON.parse(localStorage.getItem("inEastF"))){
             eastStats[result[0]][result[1]]++;
             eastStats[result[3]][result[4]]++;
         }
@@ -119,7 +119,7 @@ else{
             if(game.awayTeam[0] != userTeam[0] && game.homeTeam[0] != userTeam[0]){
                 let homeCPU;
                 let awayCPU;
-                for(let i = 0; i < allStats.length; i++){
+                for(let i = 0; i < eastAllStats.length; i++){
                     if(game.homeTeam[0] == eastAllStats[i][0]){
                         homeCPU = i;
                     }
@@ -159,7 +159,7 @@ else{
             if(game.awayTeam[0] != userTeam[0] && game.homeTeam[0] != userTeam[0]){
                 let homeCPU;
                 let awayCPU;
-                for(let i = 0; i < allStats.length; i++){
+                for(let i = 0; i < westAllStats.length; i++){
                     if(game.homeTeam[0] == westAllStats[i][0]){
                         homeCPU = i;
                     }
@@ -258,44 +258,52 @@ function shuffleArray(array) {
 }
 function displayWeekSchedule(){
     //If the season is over
-    // if(currentWeek >= 28){
-    //     let sortedAllStats = allStats.slice();
-    //     //Sort the teams based on points
-    //     sortedAllStats.sort((a, b) => {
-    //         if (a[1] === b[1]) {
-    //             return a[0].localeCompare(b[0]);
-    //         }
-    //         return b[1] - a[1];
-    //     });
-    //     for(let i = 0; i < sortedAllStats.length; i++){
-    //         if(sortedAllStats[i][0] == userTeam[0]){
-    //             //Display the finishing place
-    //             if(i == 0){
-    //                 document.getElementById("nextOpponent").innerHTML = "You Finished " + (i+1) + "st place";
-    //             }
-    //             else if(i == 0){
-    //                 document.getElementById("nextOpponent").innerHTML = "You Finished " + (i+1) + "nd place";
-    //             }
-    //             else if(i == 0){
-    //                 document.getElementById("nextOpponent").innerHTML = "You Finished " + (i+1) + "rd place";
-    //             }
-    //             else{
-    //                 document.getElementById("nextOpponent").innerHTML = "You Finished " + (i+1) + "th place";
-    //             }
-    //             //reset the local storage entries
-    //             document.getElementById("linkNext").onclick = function() {
-    //                 localStorage.removeItem("resultF");
-    //                 localStorage.removeItem("scheduleF");
-    //                 localStorage.removeItem("currentWeekF");
-    //                 localStorage.removeItem("standingsF");
-    //                 localStorage.removeItem("gameTypeF");
-    //                 localStorage.removeItem("userTeamF");
-    //                 document.location.href = "index.html";
-    //             };
-    //         }
-    //     }
-    //     return;
-    // }
+    if(currentWeek >= 28){
+        let sortedAllStats;
+        if(JSON.parse(localStorage.getItem("inEastF"))){
+            sortedAllStats = eastAllStats.slice();
+        }
+        else{
+            sortedAllStats = westAllStats.slice();
+        }
+        //Sort the teams based on points
+        sortedAllStats.sort((a, b) => {
+            if (a[1] === b[1]) {
+                return a[0].localeCompare(b[0]);
+            }
+            return b[1] - a[1];
+        });
+        for(let i = 0; i < sortedAllStats.length; i++){
+            if(sortedAllStats[i][0] == userTeam[0]){
+                //Display the finishing place
+                if(i == 0){
+                    document.getElementById("nextOpponent").innerHTML = "You Finished " + (i+1) + "st place";
+                }
+                else if(i == 0){
+                    document.getElementById("nextOpponent").innerHTML = "You Finished " + (i+1) + "nd place";
+                }
+                else if(i == 0){
+                    document.getElementById("nextOpponent").innerHTML = "You Finished " + (i+1) + "rd place";
+                }
+                else{
+                    document.getElementById("nextOpponent").innerHTML = "You Finished " + (i+1) + "th place";
+                }
+                //reset the local storage entries
+                document.getElementById("linkNext").onclick = function() {
+                    localStorage.removeItem("resultF");
+                    localStorage.removeItem("eastScheduleF");
+                    localStorage.removeItem("westScheduleF");
+                    localStorage.removeItem("currentWeekF");
+                    localStorage.removeItem("eastStandingsF");
+                    localStorage.removeItem("westStandingsF");
+                    localStorage.removeItem("gameTypeF");
+                    localStorage.removeItem("userTeamF");
+                    document.location.href = "index.html";
+                };
+            }
+        }
+        return;
+    }
     //If the season is still going on
     if(showingEast){
         weekScheduleHeader.innerHTML = `Game ${parseInt(currentWeek)+1} Schedule`;
@@ -351,7 +359,7 @@ function displayWeekSchedule(){
                 nextOpponent.innerHTML = "Next Game is Against The " + eastSchedule[currentWeek][i].awayTeam[0];
             }
             if(eastSchedule[currentWeek][i].awayTeam[0] == userTeam[0]){
-                nextOpponent.innerHTML = "Next Game is Against The " + eaSchedule[currentWeek][i].homeTeam[0];
+                nextOpponent.innerHTML = "Next Game is Against The " + eastSchedule[currentWeek][i].homeTeam[0];
             }
             row.appendChild(game)
             weekScheduleTable.appendChild(row)
@@ -488,17 +496,17 @@ function displayStandings(){
     }
 }
 function pickSeasonTeam(){
-    //If the season hasn't started yet --> pick your team
     if(localStorage.getItem("currentWeekF") !== null && localStorage.getItem("currentWeekF") != 0){
         localStorage.setItem("gameTypeF", "season");
         document.location.href="standings.html";
     }
-    //Else --> You get your previous team
     else{
         seasonTeamSelect.style.display = "block";
         quickPlayTeamSelect.style.display = "none";
         selectTeamName = document.getElementById("seasonTeamNameSelect");
-        selectTeamName.innerHTML = userTeam[0];
+        selectTeamName.innerHTML = leagueAllStats[0][0];
+        localStorage.setItem("inEastF", JSON.stringify(false));
+        localStorage.setItem("userTeamF", JSON.stringify(leagueAllStats[0]));
         localStorage.setItem("gameTypeF", "season");
     }
     document.getElementById("showInstructionsButton").style.display = "none";
@@ -512,50 +520,62 @@ function pickQuickPlayTeam(){
     document.getElementById("showInstructionsButton").style.display = "none";
 }
 function scrollRightTeams(){
-    let index = leagueAllStats.indexOf(userTeam)+1;
+    let curTeam = JSON.parse(localStorage.getItem("userTeamF"));
+    let index;
+    for(let i = 0; i < leagueAllStats.length; i++){
+        if(leagueAllStats[i][0] == curTeam[0]){
+            index = i+1;
+        }
+    }
     if(index > leagueAllStats.length-1){
-        index-=leagueAllStats.length
+        index-=leagueAllStats.length;
     }
     selectTeamName.innerHTML = leagueAllStats[index][0];
-    userTeam = leagueAllStats[index];
+    curTeam = leagueAllStats[index];
     let inEast = false;
     eastAllStats.every(team => {
-        if(userTeam[0] == team[0]){
+        if(curTeam[0] == team[0]){
             inEast = true;
             return false;
         }
         return true;
     });
     if(inEast){
-        localStorage.setItem("inEastF", true);
+        localStorage.setItem("inEastF", JSON.stringify(true));
     }
     else{
-        localStorage.setItem("inEastF", false);
+        localStorage.setItem("inEastF", JSON.stringify(false));
     }
     localStorage.setItem("userTeamF", JSON.stringify(leagueAllStats[index]));
 }
 function scrollLeftTeams(){
-    let index = leagueAllStats.indexOf(userTeam)-1;
+    let curTeam = JSON.parse(localStorage.getItem("userTeamF"));
+    let index;
+    for(let i = 0; i < leagueAllStats.length; i++){
+        if(leagueAllStats[i][0] == curTeam[0]){
+            index = i-1;
+        }
+    }
     if(index < 0){
-        index+=leagueAllStats.length
+        index+=leagueAllStats.length;
     }
     selectTeamName.innerHTML = leagueAllStats[index][0];
-    userTeam = leagueAllStats[index];
+    curTeam = leagueAllStats[index];
     let inEast = false;
     eastAllStats.every(team => {
-        if(userTeam[0] == team[0]){
+        if(curTeam[0] == team[0]){
             inEast = true;
             return false;
         }
         return true;
     });
     if(inEast){
-        localStorage.setItem("inEastF", true);
+        localStorage.setItem("inEastF", JSON.stringify(true));
     }
     else{
-        localStorage.setItem("inEastF", false);
+        localStorage.setItem("inEastF", JSON.stringify(false));
     }
-    localStorage.setItem("userTeam", JSON.stringify(leagueAllStats[index]));
+    localStorage.setItem("userTeamF", JSON.stringify(leagueAllStats[index]));
 }
 function goToGame(){
     let inEast = false;

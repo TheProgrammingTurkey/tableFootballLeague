@@ -3,6 +3,8 @@ let ctx = canvas.getContext('2d');
 let secondsPassed = 0;
 let oldTimeStamp = 0;
 
+let inEast = JSON.parse(localStorage.getItem("inEastF"));
+
 //sets canvas fullscreen
 canvas.height = Math.floor(window.innerHeight);
 canvas.width = Math.floor(window.innerWidth);
@@ -69,7 +71,7 @@ let kickLength = 0; // How long the ball should be in the air during a kickoff
 //If the user picked Quick Play, figure out what team is the home team and what team is the away team
 if(localStorage.getItem("gameTypeF") == "quickPlay"){
     let teams;
-    if(localStorage.getItem("inEastF") == true){
+    if(inEast){
         teams = JSON.parse(localStorage.getItem("eastStandingsF"));
     }
     else{
@@ -88,7 +90,7 @@ if(localStorage.getItem("gameTypeF") == "quickPlay"){
 }//If the user picked Season, use the schedule to find the away team
 else{
     currentWeek = parseInt(localStorage.getItem("currentWeekF"));
-    if(localStorage.getItem("inEastF") == true){
+    if(inEast){
         thisWeek = JSON.parse(localStorage.getItem("eastScheduleF"))[currentWeek];
     }
     else{
@@ -104,9 +106,8 @@ else{
             game.awayTeam = curGame.homeTeam;
         }
     });
-    console.log(game.homeTeam)
     let standings;
-    if(localStorage.getItem("inEastF") == true){
+    if(inEast){
         standings = JSON.parse(localStorage.getItem("eastStandingsF"));
     }
     else{
@@ -232,10 +233,11 @@ function updatePlaying(){
             game.playing = false;
             reset();
         }//End the game if one team gets to 30
-        if(game.homeScore >= 30 || game.awayScore >= 30){
+        if(game.homeScore == 0 || game.awayScore >= 30){
+            game.awayScore = 1;
             if(localStorage.getItem("gameTypeF") == "season"){
                 let standings;
-                if(localStorage.getItem("inEastF") == true){
+                if(inEast){
                     standings = JSON.parse(localStorage.getItem("eastStandingsF"));
                 }
                 else{
