@@ -44,6 +44,7 @@ let football = {
     vertex2: new Vec2,
     vertex3: new Vec2,
     center: new Vec2(canvas.width/2, canvas.height-table.y),
+    standardSideLengths: [58, 82],
     sideLengths: [58, 82],
     mass: 1,
     velocity: new Vec2(0, 0),
@@ -56,6 +57,10 @@ let football = {
     design: [new Vec2(5,5), new Vec2(53,53), new Vec2(0,0), new Vec2(0,0), new Vec2(0,0), new Vec2(0,0), new Vec2(0,0), new Vec2(0,0)],
     fieldGoalScored: false,
 };
+if(canvas.height < 700){
+    football.standardSideLengths = [58*.6, 82*.6];
+    football.sideLengths = [58*.6, 82*.6];
+}
 //Set up the mouse
 let mouse = {
     history: []
@@ -190,8 +195,8 @@ function updatePlaying(){
     football.angularVelocity = Math.round(football.angularVelocity*1000)/1000;
     //If during a kickoff, make the size go bigger then smaller (like in the air)
     if(football.kickoff && !football.stopped){
-        football.sideLengths[0] = 58*((kickLength)*Math.sin((kickTime/kickLength)*Math.PI)+1);
-        football.sideLengths[1] = 82*((kickLength)*Math.sin((kickTime/kickLength)*Math.PI)+1);
+        football.sideLengths[0] = football.standardSideLengths[0]*((kickLength)*Math.sin((kickTime/kickLength)*Math.PI)+1);
+        football.sideLengths[1] = football.standardSideLengths[1]*((kickLength)*Math.sin((kickTime/kickLength)*Math.PI)+1);
         kickTime+=secondsPassed;
     }
     if(football.kickoff && kickTime > kickLength){
@@ -322,7 +327,7 @@ function updateKicking(){
         }
     }
     //The ball missed
-    if(kickTime > 5){
+    if(kickTime > 4){
         game.playing = true;
         reset();
         game.homeOffs = 0;
@@ -339,7 +344,11 @@ function aiMove(){
     football.stopped = false;
     //Field Goal Kicks
     if(!game.playing){       
-        football.velocity.y = (goal.vertex2.y-football.center.y)*(2-3*Math.random()/7)
+        football.velocity.y = (goal.vertex2.y-football.center.y)*(2-3*Math.random()/7);
+        console.log(football.velocity.y)
+        if(canvas.height < 700){
+            football.velocity.y-=120;
+        }
         football.velocity.x = 60*(Math.random()-.5)/5;
         football.angularVelocity = football.velocity.y;
         kickTime = 0;
@@ -362,7 +371,7 @@ function generateAIPower(skill) {
     //Generates a value 0-1 from their skill --> 99 is a 1, 70 is a 0
     accuracy = (skill - 70) / 29;
     //Calculates how wide the range is
-    spread = 2.2 - accuracy * 1.5;
+    spread = 2.2 - accuracy * 1.2;
     //Finds the distance from the mean to the low
     lowRange = spread * 0.8;
     //Finds the distance from the mean to the high
@@ -395,7 +404,7 @@ function reset(){
     }
     football.stopped = true;
     football.angularVelocity = 0
-    football.sideLengths = [58,82];
+    football.sideLengths = [football.standardSideLengths[0],football.standardSideLengths[1]];
     football.velocity = new Vec2(0,0);
     football.angle2D = -3*Math.PI/4;
     football.kickoff = true;
