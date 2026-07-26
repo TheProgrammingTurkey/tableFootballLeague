@@ -23,13 +23,21 @@ let game = {
     homeTeam: "",
     awayTeam: ""
 };
-//Set up the table
+//Set up the table and make it fit all screen sizes
 const table = {
     x: 100,
     y: 100,
-    height: canvas.height - 200,
-    width: canvas.width - 200,
+    height: Math.min(canvas.height - 200, 600),
+    width: Math.min(canvas.width - 200, 1400),
 };
+if(canvas.width < 500){
+    table.x = 25;
+    table.width = canvas.width - 50;
+}
+else if(canvas.width < 800){
+    table.x = 50;
+    table.width = canvas.width - 100;
+}
 //Set up the football
 let football = {
     vertex1: new Vec2,
@@ -52,12 +60,19 @@ let football = {
 let mouse = {
     history: []
 };
-//Set up the field goal
+//Set up the field goal and make it work for all screen sizes
 const goal = {
-    vertex1: new Vec2(table.x+200, table.y),
-    vertex2: new Vec2(table.x+table.width-200, table.y+300),
+    vertex1: new Vec2(),
+    vertex2: new Vec2(),
     vertex3: new Vec2(table.x+table.width/2, table.y+400),
 }
+goal.vertex1 = new Vec2(Math.max(goal.vertex3.x-350, 0), table.y);
+goal.vertex2 = new Vec2(Math.min(goal.vertex3.x+350, canvas.width), table.y+300);
+if(table.width < 750){
+    goal.vertex1.x = table.x;
+    goal.vertex2.x = table.x+table.width;
+}
+
 //Calculate the center of mass of the football
 calculateVertices();
 
@@ -318,30 +333,20 @@ function updateKicking(){
 function aiMove(){
     //football.velocity.y = (table.y+table.height-football.center.y)*3 --- perfect power
     //Generating error for the AI
-    const skill = game.awayTeam[4];
-    let accuracy = Math.pow((skill - 70) / 29, 1.5);
-
-    // Skill controls range size
-    let spread = 2.2 - accuracy * 1.5;
-
-    // 75% of range below 3, 25% above 3
-    let lowRange = spread * 0.8;
-    let highRange = spread * 0.2;
-
-    let distance = 3 + (Math.random() * (lowRange + highRange) - lowRange);
+    distance = generateAIPower(game.awayTeam[4]);
     football.velocity.y = (table.y+table.height-football.center.y)*(distance);
     football.angularVelocity = Math.random()*35;
     football.stopped = false;
     //Field Goal Kicks
     if(!game.playing){       
-        football.velocity.y = (goal.vertex2.y-football.center.y)*(1.5-Math.random()/3)
-        football.velocity.x = 60*(Math.random()-.5);
+        football.velocity.y = (goal.vertex2.y-football.center.y)*(2-3*Math.random()/7)
+        football.velocity.x = 60*(Math.random()-.5)/5;
         football.angularVelocity = football.velocity.y;
         kickTime = 0;
     }
     //Kickoffs
     else if(football.kickoff){
-        kickLength = Math.abs(football.velocity.y/football.inertia)/1.5//Math.min(Math.abs(football.velocity.y/football.inertia)/1.5, table.height/230);
+        kickLength = Math.min(Math.abs(football.velocity.y/football.inertia)/1.8, table.height/230);
         if(game.homeTurn){
             football.velocity.y = -250;
         }
@@ -351,6 +356,19 @@ function aiMove(){
         football.velocity.x = 0;
         football.angularVelocity/=2;
     }
+}
+//Calculate the AI hit power
+function generateAIPower(skill) {
+    //Generates a value 0-1 from their skill --> 99 is a 1, 70 is a 0
+    accuracy = (skill - 70) / 29;
+    //Calculates how wide the range is
+    spread = 2.2 - accuracy * 1.5;
+    //Finds the distance from the mean to the low
+    lowRange = spread * 0.8;
+    //Finds the distance from the mean to the high
+    highRange = spread * 0.2;
+    //Randomizes and calculates the distance for the shot
+    return 3 + (Math.random() * (lowRange + highRange) - lowRange);
 }
 //Check if the mouse hit any of the sides of the football
 function checkBallHit(mouseEnd){
@@ -414,7 +432,7 @@ function calculateCollision(intersectionPoints, mouseEnd){
         kickTime = 0;
     }//Convert the impulse to kickoff power
     else if(football.kickoff){
-        kickLength = Math.min(Math.abs(football.velocity.y/football.inertia), table.height/230);
+        kickLength = Math.min(Math.abs(football.velocity.y/football.inertia)/1.5, table.height/230);
         if(game.homeTurn){
             football.velocity.y = -250;
         }
