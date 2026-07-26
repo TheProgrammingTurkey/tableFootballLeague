@@ -43,7 +43,7 @@ let football = {
     vertex1: new Vec2,
     vertex2: new Vec2,
     vertex3: new Vec2,
-    center: new Vec2(canvas.width/2, canvas.height-table.y),
+    center: new Vec2(canvas.width/2, table.y+table.height),
     standardSideLengths: [58, 82],
     sideLengths: [58, 82],
     mass: 1,
