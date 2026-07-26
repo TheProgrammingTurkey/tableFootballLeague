@@ -391,7 +391,7 @@ function reset(){
     //If resetting to a kickoff
     if(game.playing){
         if(game.homeTurn){
-            football.center = new Vec2(canvas.width/2, canvas.height-table.y);
+            football.center = new Vec2(canvas.width/2, table.y+table.height);
             game.homeTurn = true;
         }
         else{
