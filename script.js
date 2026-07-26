@@ -400,7 +400,7 @@ function reset(){
         }
     }//Reset for a field goal kick
     else{
-        football.center = new Vec2(canvas.width/2, canvas.height-table.y);
+        football.center = new Vec2(canvas.width/2, table.y+table.height);
     }
     football.stopped = true;
     football.angularVelocity = 0
