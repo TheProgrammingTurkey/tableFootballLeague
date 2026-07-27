@@ -306,24 +306,23 @@ function updateKicking(){
         football.velocity.y+=250*secondsPassed; //Gravity
         kickTime+=secondsPassed;
         //If the ball goes through the uprights
-        if(!football.fieldGoalScored && kickTime > 2.5 && football.center.x > goal.vertex1.x && football.center.x < goal.vertex2.x && football.center.y < goal.vertex2.y){
-            if(game.homeTurn){
-                if(game.awayOffs == 3){
-                    game.homeScore+=3;
-                }
-                else{
-                    game.homeScore+=1;
-                }
+        if(!football.fieldGoalScored && football.center.x > goal.vertex1.x && football.center.x < goal.vertex2.x && football.center.y < goal.vertex2.y){
+            if(kickTime > 2.5 && game.homeTurn && game.awayOffs == 3){
+                game.homeScore+=3;
+                football.fieldGoalScored = true;
             }
-            else{
-                if(game.homeOffs == 3){
-                    game.awayScore+=3;
-                }
-                else{
-                    game.awayScore+=1;
-                }
+            else if(kickTime > 2.5 && game.awayTeam && game.homeOffs == 3){
+                game.awayScore+=3;
+                football.fieldGoalScored = true;
             }
-            football.fieldGoalScored = true
+            else if(kickTime > 1.8 && game.homeTurn && game.awayOffs != 3){
+                game.homeScore+=1;
+                football.fieldGoalScored = true;
+            }
+            else if(kickTime > 1.8 && game.awayTeam && game.homeOffs != 3){
+                game.awayScore+=1;
+                football.fieldGoalScored = true;
+            }
         }
     }
     //The ball missed
@@ -345,7 +344,6 @@ function aiMove(){
     //Field Goal Kicks
     if(!game.playing){       
         football.velocity.y = (goal.vertex2.y-football.center.y)*(2-3*Math.random()/7);
-        console.log(football.velocity.y)
         if(canvas.height < 700){
             football.velocity.y-=120;
         }
@@ -441,7 +439,7 @@ function calculateCollision(intersectionPoints, mouseEnd){
         kickTime = 0;
     }//Convert the impulse to kickoff power
     else if(football.kickoff){
-        kickLength = Math.min(Math.abs(football.velocity.y/football.inertia)/1.5, table.height/230);
+        kickLength = Math.min(Math.abs(football.velocity.y/football.inertia)/2, table.height/230);
         if(game.homeTurn){
             football.velocity.y = -250;
         }
