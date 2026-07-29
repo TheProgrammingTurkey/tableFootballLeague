@@ -311,7 +311,7 @@ function updateKicking(){
                 game.homeScore+=3;
                 football.fieldGoalScored = true;
             }
-            else if(kickTime > 2.5 && game.awayTurn && game.homeOffs == 3){
+            else if(kickTime > 2.5 && !game.homeTurn && game.homeOffs == 3){
                 game.awayScore+=3;
                 football.fieldGoalScored = true;
             }
@@ -319,7 +319,7 @@ function updateKicking(){
                 game.homeScore+=1;
                 football.fieldGoalScored = true;
             }
-            else if(kickTime > 1.8 && game.awayTurn && game.homeOffs != 3){
+            else if(kickTime > 1.8 && !game.homeTurn && game.homeOffs != 3){
                 game.awayScore+=1;
                 football.fieldGoalScored = true;
             }
