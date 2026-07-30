@@ -87,6 +87,28 @@ const power = 2; //Higher number means more power
 let kickTime = 0; //How long the ball has been in the air during a kickoff
 let kickLength = 0; // How long the ball should be in the air during a kickoff
 
+//Tuning for the AI
+// The perfect shot.
+const PERFECT_SHOT = 3;
+
+// Average amount every AI underhits.
+// More negative = more conservative.
+const BASE_UNDERHIT = -0.35;
+
+// How much better a 99 aims than a 70.
+// Smaller values = skill matters less.
+const AIM_IMPROVEMENT = 0.18;
+
+// Error spread (consistency).
+// Higher = more random.
+const WORST_STD_DEV = 0.95;   // Skill 70
+const BEST_STD_DEV = 0.80;    // Skill 99
+
+// Reflection strength when going outside 1-5.
+// 0 = hard clamp
+// 1 = perfect reflection
+const REFLECTION = 0.30;
+
 
 //If the user picked Quick Play, figure out what team is the home team and what team is the away team
 if(localStorage.getItem("gameTypeF") == "quickPlay"){
@@ -337,17 +359,14 @@ function updateKicking(){
 function aiMove(){
     //football.velocity.y = (table.y+table.height-football.center.y)*3 --- perfect power
     //Generating error for the AI
-    distance = generateAIPower(game.awayTeam[4]);
+    let distance = generateShot(game.awayTeam[4]);
     football.velocity.y = (table.y+table.height-football.center.y)*(distance);
     football.angularVelocity = Math.random()*35;
     football.stopped = false;
     //Field Goal Kicks
     if(!game.playing){       
-        football.velocity.y = (goal.vertex2.y-football.center.y)*(2-3*Math.random()/7);
-        if(canvas.height < 700){
-            football.velocity.y-=120;
-        }
-        football.velocity.x = 60*(Math.random()-.5)/5;
+        football.velocity.y = Math.pow(Math.abs(goal.vertex2.y-football.center.y),.4)*(-35-25*Math.random());
+        football.velocity.x = 18*(Math.random()-.5);
         football.angularVelocity = football.velocity.y;
         kickTime = 0;
     }
@@ -364,18 +383,57 @@ function aiMove(){
         football.angularVelocity/=2;
     }
 }
-//Calculate the AI hit power
-function generateAIPower(skill) {
-    //Generates a value 0-1 from their skill --> 99 is a 1, 70 is a 0
-    accuracy = (skill - 70) / 29;
-    //Calculates how wide the range is
-    spread = 2.2 - accuracy * 1.2;
-    //Finds the distance from the mean to the low
-    lowRange = spread * 0.8;
-    //Finds the distance from the mean to the high
-    highRange = spread * 0.2;
-    //Randomizes and calculates the distance for the shot
-    return 3 + (Math.random() * (lowRange + highRange) - lowRange);
+
+
+// Returns a normally distributed random number.
+function randomNormal(mean, stdDev) {
+
+    let u = 0;
+    let v = 0;
+
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+
+    let z =
+        Math.sqrt(-2 * Math.log(u)) *
+        Math.cos(2 * Math.PI * v);
+
+    return mean + z * stdDev;
+}
+
+
+// Generates a shot value between 1 and 5.
+function generateShot(skill) {
+
+    // Clamp skill.
+    skill = Math.max(70, Math.min(99, skill));
+
+    // Convert skill to 0-1.
+    let t = (skill - 70) / 29;
+
+    // Better players aim slightly closer to perfect.
+    let meanError = BASE_UNDERHIT + AIM_IMPROVEMENT * t;
+
+    // Better players are slightly more consistent.
+    let stdDev = WORST_STD_DEV - (WORST_STD_DEV - BEST_STD_DEV) * t;
+
+    // Generate error.
+    let error = randomNormal(meanError, stdDev);
+
+    // Apply error to the perfect shot.
+    let shot = PERFECT_SHOT + error;
+
+    // Reflect instead of hard clamping.
+    // This avoids huge piles of shots at exactly 1 or 5.
+    if (shot < 1) {
+        shot = 1 + (1 - shot) * REFLECTION;
+    }
+
+    if (shot > 5) {
+        shot = 5 - (shot - 5) * REFLECTION;
+    }
+
+    return shot;
 }
 //Check if the mouse hit any of the sides of the football
 function checkBallHit(mouseEnd){
@@ -767,7 +825,7 @@ function draw(timeStamp){
         ctx.fillStyle = "tan";
         ctx.fill();
 
-        if(kickTime < 2.5){
+        if(!football.fieldGoalScored){
             //Draw the goal posts
             ctx.beginPath();
             ctx.moveTo(goal.vertex1.x, goal.vertex1.y)
