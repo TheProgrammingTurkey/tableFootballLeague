@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="homeScreen.css">
     <script src="standings.js" defer></script>
-    <link rel="icon" type="image/x-icon" href="football.png">
+    <link rel="icon" type="image/x-icon" href="assets/football.png">
     <title>Table Football League</title>
 </head>
 <body>
@@ -38,13 +38,16 @@
         </div>
         <a href="game.html">Select Team</a>
     </div>
-    <p id="information">V 1.2.2</p>
+    <p id="information">V 1.2.3</p>
     <!-- Instructions/Controls Popup-->
-    <button onclick="showInstructions()" id="showInstructionsButton">Instructions</button>
+    <button onclick="showInstructions()" id="showInstructionsButton">Info</button>
     <div id="instructions" class="popup">
         <button id = "x" onclick = "hideInstructions()">X</button>
+        <br>
+        <br>
         <h2>Controls</h2>
         <p>With the mouse, touchpad, or touchscreen, swipe across the football to hit it.</p>
+        <br>
         <h2>Instructions</h2>
         <p>Every game starts with a kickoff. Swipe up or down on the football towards your opponents end.</p>
         <p>For every hit, your goal is to hit the football so that it is partially hanging off your opponents end of the table (A Touchdown).</p>
@@ -52,12 +55,44 @@
         <p>If one team gets three offs before either team scores, the opposing team gets a field goal.</p>
         <p>For field goals, your goal is to hit the ball through the uprights.</p>
         <p>The game is first to 30 points.</p>
+        <br>
         <h2>Scoring</h2>
         <p>Touchdown (6): Hit the football so that it is partially hanging off your opponents end of the table</p>
         <p>Extra Point (1): Hit the football through the uprights after the touchdown</p>
-        <p>Two Point Conversion (2): Hit the football so that it is partially hanging off your opponents end of the table after the touchdown</p>
+        <!-- <p>Two Point Conversion (2): Hit the football so that it is partially hanging off your opponents end of the table after the touchdown</p> -->
         <p>Field Goal (3): Hit the football through the uprights after 3 Offs from the opponent</p>
         <p>Safety (2*): Hit the football partially off, or entirely off of your own side (* 2 points for the opponent)</p>
+        <br>
+        <h2>Teams</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr;">
+            <div>
+                <h3>Western Conference</h3>
+                <p>Alabama Fire - 96 Overall</p>
+                <p>Atlantic Ocean Tarpons - 88 Overall</p>
+                <p>Georgia Hawks - 87 Overall</p>
+                <p>Maine Lions - 76 Overall</p>
+                <p>North Carolina Cougars - 89 Overall</p>
+                <p>New Orleans Condiments - 79 Overall</p>
+                <p>Ohio Generals - 95 Overall</p>
+                <p>Youngstown Yams - 75 Overall</p> 
+            </div>
+            <div>
+                <h3>Eastern Conference</h3>
+                <p>Colorado Jaguars - 78 Overall</p>
+                <p>Dallas Pickles - 84 Overall</p>
+                <p>Florida Fridge Raiders - 97 Overall</p>
+                <p>Hawaii Volcanoes - 93 Overall</p>
+                <p>Idaho Idiots - 83 Overall</p>
+                <p>Maui Morans - 87 Overall</p>
+                <p>Miami Sharks - 90 Overall</p>
+                <p>Pennsylvania Pencats - 74 Overall</p>
+            </div>
+        </div>
+        <br>
+        <iframe src="https://app.atlas.co/shared/8WKIiGcHbj05C45wwDiR"></iframe>
+        <br>
+        <br>
+        <br>
     </div>
 </body>
 </html>

@@ -383,8 +383,6 @@ function aiMove(){
         football.angularVelocity/=2;
     }
 }
-
-
 // Returns a normally distributed random number.
 function randomNormal(mean, stdDev) {
 
@@ -400,8 +398,6 @@ function randomNormal(mean, stdDev) {
 
     return mean + z * stdDev;
 }
-
-
 // Generates a shot value between 1 and 5.
 function generateShot(skill) {
 

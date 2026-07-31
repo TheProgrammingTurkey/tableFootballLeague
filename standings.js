@@ -79,7 +79,7 @@ let maineStats = ["Maine Lions", westStats[3][0], westStats[3][1], "MAI", 76];
 let newOrleansStats = ["New Orleans Condiments", westStats[5][0], westStats[5][1], "NOC", 89];
 let northCarolinaStats = ["North Carolina Cougars", westStats[4][0], westStats[4][1], "NCC", 79];
 let ohioStats = ["Ohio Generals", westStats[6][0], westStats[6][1], "OHI", 95];
-let youngstownStats = ["Youngstown Yams", westStats[7][0], westStats[7][1], "YAM", 74];
+let youngstownStats = ["Youngstown Yams", westStats[7][0], westStats[7][1], "YAM", 75];
 let westAllStats = [alabamaStats, atlanticStats, georgiaStats, maineStats, newOrleansStats, northCarolinaStats, ohioStats, youngstownStats];
 let leagueAllStats = [alabamaStats, atlanticStats, coloradoStats, dallasStats, floridaStats, georgiaStats, hawaiiStats, idahoStats, maineStats, mauiStats, miamiStats, newOrleansStats, northCarolinaStats, ohioStats, pennsylvaniaStats, youngstownStats]
 
