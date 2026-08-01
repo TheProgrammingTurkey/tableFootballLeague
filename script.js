@@ -65,7 +65,7 @@ let football = {
     vertex1: new Vec2,
     vertex2: new Vec2,
     vertex3: new Vec2,
-    center: new Vec2(canvas.width/2, table.y+table.height),
+    center: new Vec2(table.x+table.width/2, table.y+table.height),
     standardSideLengths: [58, 82],
     sideLengths: [58, 82],
     mass: 1,
@@ -449,16 +449,16 @@ function reset(){
     //If resetting to a kickoff
     if(game.playing){
         if(game.homeTurn){
-            football.center = new Vec2(canvas.width/2, table.y+table.height);
+            football.center = new Vec2(table.x+table.width/2, table.y+table.height);
             game.homeTurn = true;
         }
         else{
-            football.center = new Vec2(canvas.width/2, table.y);
+            football.center = new Vec2(table.x+table.width/2, table.y);
             game.homeTurn = false;
         }
     }//Reset for a field goal kick
     else{
-        football.center = new Vec2(canvas.width/2, table.y+table.height);
+        football.center = new Vec2(table.x+table.width/2, table.y+table.height);
     }
     football.stopped = true;
     football.angularVelocity = 0
