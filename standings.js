@@ -76,8 +76,8 @@ let alabamaStats = ["Alabama Fire", westStats[0][0], westStats[0][1], "ALA", 96]
 let atlanticStats = ["Atlantic Ocean Tarpons", westStats[1][0], westStats[1][1], "AOT", 88];
 let georgiaStats = ["Georgia Hawks", westStats[2][0], westStats[2][1], "GEO", 87];
 let maineStats = ["Maine Lions", westStats[3][0], westStats[3][1], "MAI", 76];
-let newOrleansStats = ["New Orleans Condiments", westStats[5][0], westStats[5][1], "NOC", 89];
-let northCarolinaStats = ["North Carolina Cougars", westStats[4][0], westStats[4][1], "NCC", 79];
+let newOrleansStats = ["New Orleans Condiments", westStats[4][0], westStats[4][1], "NOC", 89];
+let northCarolinaStats = ["North Carolina Cougars", westStats[5][0], westStats[5][1], "NCC", 79];
 let ohioStats = ["Ohio Generals", westStats[6][0], westStats[6][1], "OHI", 95];
 let youngstownStats = ["Youngstown Yams", westStats[7][0], westStats[7][1], "YAM", 75];
 let westAllStats = [alabamaStats, atlanticStats, georgiaStats, maineStats, newOrleansStats, northCarolinaStats, ohioStats, youngstownStats];
@@ -279,10 +279,10 @@ function displayWeekSchedule(){
                 if(i == 0){
                     document.getElementById("nextOpponent").innerHTML = "You Finished " + (i+1) + "st place";
                 }
-                else if(i == 0){
+                else if(i == 1){
                     document.getElementById("nextOpponent").innerHTML = "You Finished " + (i+1) + "nd place";
                 }
-                else if(i == 0){
+                else if(i == 2){
                     document.getElementById("nextOpponent").innerHTML = "You Finished " + (i+1) + "rd place";
                 }
                 else{
