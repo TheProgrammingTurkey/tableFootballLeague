@@ -3,7 +3,29 @@ let ctx = canvas.getContext('2d');
 let secondsPassed = 0;
 let oldTimeStamp = 0;
 
-let inEast = JSON.parse(localStorage.getItem("inEastF"));
+function getJsonStorage(key, fallback = null) {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return fallback;
+    try {
+        return JSON.parse(raw);
+    } catch {
+        return fallback;
+    }
+}
+
+const inEast = getJsonStorage("inEastF", false);
+const gameType = localStorage.getItem("gameTypeF");
+const userTeamData = getJsonStorage("userTeamF", null);
+const eastStandingsData = getJsonStorage("eastStandingsF", null);
+const westStandingsData = getJsonStorage("westStandingsF", null);
+const eastScheduleData = getJsonStorage("eastScheduleF", null);
+const westScheduleData = getJsonStorage("westScheduleF", null);
+
+if (!gameType || !userTeamData || (!eastStandingsData && !westStandingsData) || (!eastScheduleData && !westScheduleData)) {
+    console.warn("Missing saved game state. Redirecting to home.");
+    location.href = "index.html";
+    throw new Error("Missing saved game state");
+}
 
 //sets canvas fullscreen
 canvas.height = Math.floor(window.innerHeight);
@@ -111,15 +133,9 @@ const REFLECTION = 0.30;
 
 
 //If the user picked Quick Play, figure out what team is the home team and what team is the away team
-if(localStorage.getItem("gameTypeF") == "quickPlay"){
-    let teams;
-    if(inEast){
-        teams = JSON.parse(localStorage.getItem("eastStandingsF"));
-    }
-    else{
-        teams = JSON.parse(localStorage.getItem("westStandingsF"));
-    }
-    game.homeTeam = JSON.parse(localStorage.getItem("userTeamF"));
+if(gameType == "quickPlay"){
+    let teams = inEast ? eastStandingsData || [] : westStandingsData || [];
+    game.homeTeam = userTeamData;
     //Make sure its not a team playing against themselves
     teams.every(team => {
         if(game.homeTeam[0] == team[0]){
@@ -128,33 +144,23 @@ if(localStorage.getItem("gameTypeF") == "quickPlay"){
         }
         return true;
     });
-    game.awayTeam = teams[Math.floor(Math.random()*teams.length)];
+    game.awayTeam = teams.length ? teams[Math.floor(Math.random()*teams.length)] : game.homeTeam;
 }//If the user picked Season, use the schedule to find the away team
 else{
-    currentWeek = parseInt(localStorage.getItem("currentWeekF"));
-    if(inEast){
-        thisWeek = JSON.parse(localStorage.getItem("eastScheduleF"))[currentWeek];
-    }
-    else{
-        thisWeek = JSON.parse(localStorage.getItem("westScheduleF"))[currentWeek];
-    }
+    currentWeek = parseInt(localStorage.getItem("currentWeekF") || "0", 10);
+    const scheduleData = inEast ? eastScheduleData : westScheduleData;
+    thisWeek = scheduleData ? scheduleData[currentWeek] : [];
     thisWeek.forEach(curGame =>{
-        if(curGame.homeTeam[0] == JSON.parse(localStorage.getItem("userTeamF"))[0]){
+        if(curGame.homeTeam[0] == userTeamData[0]){
             game.awayTeam = curGame.awayTeam;
             game.homeTeam = curGame.homeTeam;
         }
-        else if(curGame.awayTeam[0] == JSON.parse(localStorage.getItem("userTeamF"))[0]){
+        else if(curGame.awayTeam[0] == userTeamData[0]){
             game.homeTeam = curGame.awayTeam;
             game.awayTeam = curGame.homeTeam;
         }
     });
-    let standings;
-    if(inEast){
-        standings = JSON.parse(localStorage.getItem("eastStandingsF"));
-    }
-    else{
-        standings = JSON.parse(localStorage.getItem("westStandingsF"));
-    }
+    let standings = inEast ? eastStandingsData : westStandingsData;
 }
 
 //when key is pressed down, log the key
@@ -474,7 +480,8 @@ function calculateCollision(intersectionPoints, mouseEnd){
     const angle2D = Math.atan2(mouseEnd.y - mouseStart.y, mouseEnd.x - mouseStart.x);
     const first = mouse.history[0];
     const last = mouse.history[mouse.history.length - 1];
-    const mouseSpeed = Math.hypot(last.x - first.x, last.y - first.y) / ((last.t - first.t) / 1000);
+    const timeDelta = (last.t - first.t) / 1000;
+    const mouseSpeed = timeDelta > 0 ? Math.hypot(last.x - first.x, last.y - first.y) / timeDelta : 0;
     //Calculate the impulse on the football
     const force = power * mouseSpeed;    
     const time = .3;

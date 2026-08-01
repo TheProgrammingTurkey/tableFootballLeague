@@ -8,6 +8,16 @@ let seasonTeamSelect = document.getElementById("seasonTeamSelect");
 let quickPlayTeamSelect = document.getElementById("quickPlayTeamSelect");
 let selectTeamName;
 
+function getJsonStorage(key, fallback = null) {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return fallback;
+    try {
+        return JSON.parse(raw);
+    } catch {
+        return fallback;
+    }
+}
+
 //To exit from the team selector
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
@@ -17,19 +27,21 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-let showingEast = JSON.parse(localStorage.getItem("inEastF"));
+let showingEast = getJsonStorage("inEastF", false);
 
 //Setup the Standings
 let eastStats;
 let westStats;
-if (localStorage.getItem("eastStandingsF") === null){
+const storedEastStandings = getJsonStorage("eastStandingsF", null);
+const storedWestStandings = getJsonStorage("westStandingsF", null);
+if (storedEastStandings === null || storedWestStandings === null){
     //Create an 8x2 array of 0's
     eastStats = Array(8).fill().map(() => Array(2).fill(0));
     westStats = Array(8).fill().map(() => Array(2).fill(0));
 }
 else{
-    eastStats = JSON.parse(localStorage.getItem("eastStandingsF"));
-    westStats = JSON.parse(localStorage.getItem("westStandingsF"));
+    eastStats = storedEastStandings.slice();
+    westStats = storedWestStandings.slice();
     eastStats.forEach(team => {
         team.shift();
     });
@@ -37,16 +49,9 @@ else{
         team.shift();
     });
     //Log the most recent scores
-    if(localStorage.getItem("resultF") !== null){
-        let result = JSON.parse(localStorage.getItem("resultF"));
-        let teams;
-        if(JSON.parse(localStorage.getItem("inEastF"))){
-            teams = JSON.parse(localStorage.getItem("eastStandingsF"));
-        }
-        else{
-            teams = JSON.parse(localStorage.getItem("westStandingsF"));
-        }
-        if(JSON.parse(localStorage.getItem("inEastF"))){
+    const result = getJsonStorage("resultF", null);
+    if(result !== null){
+        if(showingEast){
             eastStats[result[0]][result[1]]++;
             eastStats[result[3]][result[4]]++;
         }
