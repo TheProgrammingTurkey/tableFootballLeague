@@ -115,16 +115,13 @@ const PERFECT_SHOT = 3;
 
 // Average amount every AI underhits.
 // More negative = more conservative.
-const BASE_UNDERHIT = -0.6
 
 // How much better a 99 aims than a 70.
 // Smaller values = skill matters less.
-const AIM_IMPROVEMENT = 0.25;
 
 // Error spread (consistency).
 // Higher = more random.
 const WORST_STD_DEV = 1;   // Skill 70
-const BEST_STD_DEV = 0.5;    // Skill 99
 
 // Reflection strength when going outside 1-5.
 // 0 = hard clamp
