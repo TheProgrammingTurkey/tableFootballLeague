@@ -39,16 +39,24 @@
         <a href="game.html">Select Team</a>
     </div>
     <p id="information">V 1.3.3</p>
-    <!-- Instructions/Controls Popup-->
-    <button onclick="showInstructions()" id="showInstructionsButton">Info</button>
+    <div class="gamemodeSelect">
+        <button onclick="showInstructions()" id="showInstructionsButton">Info</button>
+        <button onclick="resetSeason()" id="resetSeasonButton">Reset</button>
+    </div>
+    <div id="resetSeason" class="popup">
+        <h2>Are You Sure?</h2>
+        <p>This will reset the entire season.</p>
+        <button onclick="confirmReset()">Yes</button>
+        <button onclick="hideResetSeason()">No</button>
+    </div>
+    <!-- Information Popup-->
     <div id="instructions" class="popup">
-        <button id = "x" onclick = "hideInstructions()">X</button>
-        <br>
-        <br>
-        <h2>Controls</h2>
-        <p>With the mouse, touchpad, or touchscreen, swipe across the football to hit it.</p>
-        <br>
-        <h2>Instructions</h2>
+        <button id="x" onclick="hideInstructions()">X</button>
+        <div class="popup-content">
+            <h2>Controls</h2>
+            <p>With the mouse, touchpad, or touchscreen, swipe across the football to hit it.</p>
+            <br>
+            <h2>Instructions</h2>
         <p>Every game starts with a kickoff. Swipe up or down on the football towards your opponents end.</p>
         <p>For every hit, your goal is to hit the football so that it is partially hanging off your opponents end of the table (A Touchdown).</p>
         <p>If the ball happens to slide off the table entirely, that is called an "Off" (The second number on the scoreboard).</p>
@@ -93,6 +101,7 @@
         <br>
         <br>
         <br>
+        </div>
     </div>
 </body>
 </html>
