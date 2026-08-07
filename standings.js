@@ -91,8 +91,8 @@ let leagueAllStats = [alabamaStats, atlanticStats, coloradoStats, dallasStats, f
 let userTeam;
 //Find what team is the user's
 if (localStorage.getItem("userTeamF") === null){
-    userTeam = eastAllStats[0];
-    localStorage.setItem("userTeamF", JSON.stringify(eastAllStats[0]));
+    userTeam = leagueAllStats[0];
+    localStorage.setItem("userTeamF", JSON.stringify(leagueAllStats[0]));
 }
 else{
     userTeam = JSON.parse(localStorage.getItem("userTeamF"));
