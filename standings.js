@@ -507,7 +507,6 @@ function pickSeasonTeam(){
     }
     else{
         seasonTeamSelect.style.display = "block";
-        quickPlayTeamSelect.style.display = "none";
         selectTeamName = document.getElementById("seasonTeamNameSelect");
         selectTeamName.innerHTML = leagueAllStats[0][0];
         localStorage.setItem("inEastF", JSON.stringify(false));
@@ -515,12 +514,9 @@ function pickSeasonTeam(){
         localStorage.setItem("gameTypeF", "season");
     }
 }
-function pickQuickPlayTeam(){
-    seasonTeamSelect.style.display = "none";
-    quickPlayTeamSelect.style.display = "block";
-    selectTeamName = document.getElementById("QPTeamNameSelect");
-    selectTeamName.innerHTML = userTeam[0];
+function startQuickPlay(){
     localStorage.setItem("gameTypeF", "quickPlay");
+    document.location.href="game.html";
 }
 function scrollRightTeams(){
     let curTeam = JSON.parse(localStorage.getItem("userTeamF"));

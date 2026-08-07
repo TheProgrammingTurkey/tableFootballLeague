@@ -12,7 +12,7 @@
     <h1>Table Football League</h1>
     <div id="gamemodeSelect">
         <button onclick="pickSeasonTeam()">Season</button>
-        <button onclick="pickQuickPlayTeam()">Quick Play</button>
+        <button onclick="startQuickPlay()">Quick Play</button>
     </div>
     <!-- Displays when user clicks the Season button -->
     <!-- Allows the user to pick their team and start the game -->
@@ -26,18 +26,7 @@
         </div>
         <a href="standings.html">Select Team</a>
     </div>
-    <!-- Displays when user clicks the Quick Play button -->
     <!-- Allows the user to pick their team and start the game -->
-    <div class="teamSelect" id="quickPlayTeamSelect">
-        <h2>Quick Play Team Select</h2>
-        <div class="teamScroll">
-            <h3 onclick="scrollLeftTeams()" style="font-size: 40px; cursor: pointer;">&#x25C0; &thinsp;</h3>
-            <img></img>
-            <h3 id="QPTeamNameSelect"></h3>
-            <h3 onclick="scrollRightTeams()" style="font-size: 40px; cursor: pointer;">&thinsp; &#x25B6;</h3>
-        </div>
-        <a href="game.html">Select Team</a>
-    </div>
     <p id="information">V 1.4.0</p>
     <div class="gamemodeSelect">
         <button onclick="showInstructions()" id="showInstructionsButton">Info</button>

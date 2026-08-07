@@ -21,7 +21,7 @@ const eastStandingsData = getJsonStorage("eastStandingsF", null);
 const westStandingsData = getJsonStorage("westStandingsF", null);
 const eastScheduleData = getJsonStorage("eastScheduleF", null);
 const westScheduleData = getJsonStorage("westScheduleF", null);
-if (!gameType || !userTeamData || (!eastStandingsData && !westStandingsData) || (!eastScheduleData && !westScheduleData)) {
+if (!gameType || (!userTeamData && gameType === "season") || (!eastStandingsData && !westStandingsData) || (!eastScheduleData && !westScheduleData)) {
     console.warn("Missing saved game state. Redirecting to home.");
     location.href = "index.html";
     throw new Error("Missing saved game state");
@@ -134,8 +134,10 @@ const REFLECTION = 0.30;
 
 //If the user picked Quick Play, figure out what team is the home team and what team is the away team
 if(gameType == "quickPlay"){
-    let teams = inEast ? eastStandingsData || [] : westStandingsData || [];
-    game.homeTeam = userTeamData;
+    let teams = eastStandingsData.concat(westStandingsData);
+    console.log(teams);
+    game.homeTeam = teams[Math.floor(Math.random()*16)];
+    console.log(game.homeTeam)
     //Make sure its not a team playing against themselves
     teams.every(team => {
         if(game.homeTeam[0] == team[0]){
