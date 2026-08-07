@@ -16,11 +16,11 @@ function getJsonStorage(key, fallback = null) {
 const inEast = getJsonStorage("inEastF", false);
 const gameType = localStorage.getItem("gameTypeF");
 const userTeamData = getJsonStorage("userTeamF", null);
+const difficulty = getJsonStorage("difficultyF", 50);
 const eastStandingsData = getJsonStorage("eastStandingsF", null);
 const westStandingsData = getJsonStorage("westStandingsF", null);
 const eastScheduleData = getJsonStorage("eastScheduleF", null);
 const westScheduleData = getJsonStorage("westScheduleF", null);
-
 if (!gameType || !userTeamData || (!eastStandingsData && !westStandingsData) || (!eastScheduleData && !westScheduleData)) {
     console.warn("Missing saved game state. Redirecting to home.");
     location.href = "index.html";
@@ -115,7 +115,7 @@ const PERFECT_SHOT = 3;
 
 // Average amount every AI underhits.
 // More negative = more conservative.
-const BASE_UNDERHIT = -.75;
+const BASE_UNDERHIT = -.9;
 
 // How much better a 99 aims than a 70.
 // Smaller values = skill matters less.
@@ -123,8 +123,8 @@ const AIM_IMPROVEMENT = .42;
 
 // Error spread (consistency).
 // Higher = more random.
-const WORST_STD_DEV = 1;   // Skill 70
-const BEST_STD_DEV = .5;    // Skill 99
+const WORST_STD_DEV = 1.25;   // Skill 70
+const BEST_STD_DEV = .7;    // Skill 99
 
 // Reflection strength when going outside 1-5.
 // 0 = hard clamp
@@ -405,28 +405,30 @@ function randomNormal(mean, stdDev) {
     return mean + z * stdDev;
 }
 // Generates a shot value between 1 and 5.
-function generateShot(skill) {
+function generateShot(skill, difficulty) {
 
-    // Clamp skill.
     skill = Math.max(70, Math.min(99, skill));
+    difficulty = Math.max(1, Math.min(100, difficulty));
 
-    // Convert skill to 0-1.
     let t = (skill - 70) / 29;
+    let d = (difficulty - 1) / 99;
 
-    // Better players aim slightly closer to perfect.
+    // Scale skill effectiveness by difficulty
+    t = t * (0.4 + 0.6 * d);
+
     let meanError = BASE_UNDERHIT + AIM_IMPROVEMENT * t;
 
-    // Better players are slightly more consistent.
+    // Difficulty improves aiming
+    meanError *= (1 - 0.5 * d);
+
     let stdDev = WORST_STD_DEV - (WORST_STD_DEV - BEST_STD_DEV) * t;
 
-    // Generate error.
-    let error = randomNormal(meanError, stdDev);
+    // Difficulty reduces randomness
+    stdDev *= (1 - 0.6 * d);
 
-    // Apply error to the perfect shot.
+    let error = randomNormal(meanError, stdDev);
     let shot = PERFECT_SHOT + error;
 
-    // Reflect instead of hard clamping.
-    // This avoids huge piles of shots at exactly 1 or 5.
     if (shot < 1) {
         shot = 1 + (1 - shot) * REFLECTION;
     }

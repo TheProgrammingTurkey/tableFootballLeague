@@ -514,8 +514,6 @@ function pickSeasonTeam(){
         localStorage.setItem("userTeamF", JSON.stringify(leagueAllStats[0]));
         localStorage.setItem("gameTypeF", "season");
     }
-    document.getElementById("showInstructionsButton").style.display = "none";
-    document.getElementById("resetSeasonButton").style.display = "none";
 }
 function pickQuickPlayTeam(){
     seasonTeamSelect.style.display = "none";
@@ -523,8 +521,6 @@ function pickQuickPlayTeam(){
     selectTeamName = document.getElementById("QPTeamNameSelect");
     selectTeamName.innerHTML = userTeam[0];
     localStorage.setItem("gameTypeF", "quickPlay");
-    document.getElementById("showInstructionsButton").style.display = "none";
-    document.getElementById("resetSeasonButton").style.display = "none";
 }
 function scrollRightTeams(){
     let curTeam = JSON.parse(localStorage.getItem("userTeamF"));
@@ -620,10 +616,10 @@ function hideResetSeason(){
 }
 function confirmReset(){
     document.getElementById("resetSeason").style.display = "none";
-    document.location.href = "index.html";
+    let tempDifficulty = localStorage.getItem("difficultyF");
     localStorage.clear();
+    localStorage.setItem("difficultyF", tempDifficulty);
 }
-    
 function switchConferences(){
     if(showingEast){
         showingEast = false;
@@ -637,4 +633,20 @@ function switchConferences(){
     weekScheduleTable.innerHTML = "";
     displayStandings();
     displayWeekSchedule();
+}
+function initializeSliders(){
+    document.getElementById("difficulty").value = localStorage.getItem("difficultyF") || 50;
+}
+function setSliders(){
+    localStorage.setItem("difficultyF", document.getElementById("difficulty").value);
+}
+function showSliders(){
+    document.getElementById("sliders").style.display = "block";
+}
+function hideSliders(){
+    document.getElementById("sliders").style.display = "none";
+}
+function resetSliders(){
+    document.getElementById("difficulty").value = (parseFloat(document.getElementById("difficulty").max)+parseFloat(document.getElementById("difficulty").min))/2;
+    setSliders();
 }
