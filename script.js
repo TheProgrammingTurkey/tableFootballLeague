@@ -365,7 +365,7 @@ function updateKicking(){
 function aiMove(){
     //football.velocity.y = (table.y+table.height-football.center.y)*3 --- perfect power
     //Generating error for the AI
-    let distance = generateShot(game.awayTeam[4]);
+    let distance = generateShot(game.awayTeam[4], difficulty);
     football.velocity.y = (table.y+table.height-football.center.y)*(distance);
     football.angularVelocity = Math.random()*35;
     football.stopped = false;
