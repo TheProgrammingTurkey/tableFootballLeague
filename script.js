@@ -135,9 +135,7 @@ const REFLECTION = 0.30;
 //If the user picked Quick Play, figure out what team is the home team and what team is the away team
 if(gameType == "quickPlay"){
     let teams = eastStandingsData.concat(westStandingsData);
-    console.log(teams);
     game.homeTeam = teams[Math.floor(Math.random()*16)];
-    console.log(game.homeTeam)
     //Make sure its not a team playing against themselves
     teams.every(team => {
         if(game.homeTeam[0] == team[0]){
