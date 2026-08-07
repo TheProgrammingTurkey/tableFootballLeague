@@ -90,23 +90,12 @@ let leagueAllStats = [alabamaStats, atlanticStats, coloradoStats, dallasStats, f
 
 let userTeam;
 //Find what team is the user's
-if(localStorage.getItem("gameTypeF") === "season"){
-    if (localStorage.getItem("userTeamF") === null){
-        userTeam = eastAllStats[0];
-        localStorage.setItem("userTeamF", JSON.stringify(eastAllStats[0]));
-    }
-    else{
-        userTeam = JSON.parse(localStorage.getItem("userTeamF"));
-    }
+if (localStorage.getItem("userTeamF") === null){
+    userTeam = eastAllStats[0];
+    localStorage.setItem("userTeamF", JSON.stringify(eastAllStats[0]));
 }
 else{
-    if (localStorage.getItem("userTeamQuickPlayF") === null){
-        userTeam = eastAllStats[0];
-        localStorage.setItem("userTeamQuickPlayF", JSON.stringify(eastAllStats[0]));
-    }
-    else{
-        userTeam = JSON.parse(localStorage.getItem("userTeamF"));
-    }
+    userTeam = JSON.parse(localStorage.getItem("userTeamF"));
 }
 //Setup the schedule
 let eastSchedule;
@@ -306,9 +295,14 @@ function displayWeekSchedule(){
                 }
                 //reset the local storage entries
                 document.getElementById("linkNext").onclick = function() {
-                    let tempDifficulty = localStorage.getItem("difficultyF");
-                    localStorage.clear();
-                    localStorage.setItem("difficultyF", tempDifficulty);
+                    localStorage.removeItem("resultF");
+                    localStorage.removeItem("eastScheduleF");
+                    localStorage.removeItem("westScheduleF");
+                    localStorage.removeItem("currentWeekF");
+                    localStorage.removeItem("eastStandingsF");
+                    localStorage.removeItem("westStandingsF");
+                    localStorage.removeItem("gameTypeF");
+                    localStorage.removeItem("userTeamF");
                     document.location.href = "index.html";
                 };
             }
@@ -529,13 +523,7 @@ function pickQuickPlayTeam(){
     localStorage.setItem("gameTypeF", "quickPlay");
 }
 function scrollRightTeams(){
-    let curTeam;
-    if(localStorage.getItem("gameTypeF") == "season"){
-        curTeam = JSON.parse(localStorage.getItem("userTeamF"));
-    }
-    else{
-        curTeam = JSON.parse(localStorage.getItem("userTeamQuickPlayF"));
-    }
+    let curTeam = JSON.parse(localStorage.getItem("userTeamF"));
     let index;
     for(let i = 0; i < leagueAllStats.length; i++){
         if(leagueAllStats[i][0] == curTeam[0]){
@@ -561,21 +549,10 @@ function scrollRightTeams(){
     else{
         localStorage.setItem("inEastF", JSON.stringify(false));
     }
-    if(localStorage.getItem("gameTypeF") == "season"){
-        localStorage.setItem("userTeamF", JSON.stringify(leagueAllStats[index]));
-    }
-    else{
-        localStorage.setItem("userTeamQuickPlayF", JSON.stringify(leagueAllStats[index]));
-    }
+    localStorage.setItem("userTeamF", JSON.stringify(leagueAllStats[index]));
 }
 function scrollLeftTeams(){
-    let curTeam;
-    if(localStorage.getItem("gameTypeF") == "season"){
-        curTeam = JSON.parse(localStorage.getItem("userTeamF"));
-    }
-    else{
-        curTeam = JSON.parse(localStorage.getItem("userTeamQuickPlayF"));
-    }
+    let curTeam = JSON.parse(localStorage.getItem("userTeamF"));
     let index;
     for(let i = 0; i < leagueAllStats.length; i++){
         if(leagueAllStats[i][0] == curTeam[0]){
@@ -601,12 +578,7 @@ function scrollLeftTeams(){
     else{
         localStorage.setItem("inEastF", JSON.stringify(false));
     }
-    if(localStorage.getItem("gameTypeF") == "season"){
-        localStorage.setItem("userTeamF", JSON.stringify(leagueAllStats[index]));
-    }
-    else{
-        localStorage.setItem("userTeamQuickPlayF", JSON.stringify(leagueAllStats[index]));
-    }
+    localStorage.setItem("userTeamF", JSON.stringify(leagueAllStats[index]));
 }
 function goToGame(){
     let inEast = false;

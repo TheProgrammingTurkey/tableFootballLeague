@@ -15,13 +15,7 @@ function getJsonStorage(key, fallback = null) {
 
 const inEast = getJsonStorage("inEastF", false);
 const gameType = localStorage.getItem("gameTypeF");
-let userTeamData;
-if(gameType == "season"){
-    userTeamData = getJsonStorage("userTeamF", null);
-}
-else{
-    userTeamData = getJsonStorage("userTeamQuickPlayF", null);
-}
+const userTeamData = getJsonStorage("userTeamF", null);
 const difficulty = getJsonStorage("difficultyF", 50);
 const eastStandingsData = getJsonStorage("eastStandingsF", null);
 const westStandingsData = getJsonStorage("westStandingsF", null);
